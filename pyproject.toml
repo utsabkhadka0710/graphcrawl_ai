@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graphcrawl-ai"
+version = "0.1.0"
+description = "An AI powered web scraper."
+readme = "README.md"
+requires-python = ">=3.13.5"
+license = {text = "MIT"}
+
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn",
+    "httpx",
+    "beautifulsoup4",
+    "google-genai",
+    "python-dotenv",
+    "pydantic"
+]
+
+[tool.setuptools]
+packages = ["graphcrawl-ai"]
