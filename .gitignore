@@ -1,4 +1,4 @@
 .env
 .venv
-__pycache
+__pycache__
 *.egg-info/
