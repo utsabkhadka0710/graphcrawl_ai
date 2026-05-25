@@ -7,7 +7,7 @@ name = "graphcrawl-ai"
 version = "0.1.0"
 description = "An AI powered web scraper."
 readme = "README.md"
-requires-python = ">=3.13.5"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 
 dependencies = [
@@ -21,4 +21,4 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["graphcrawl-ai"]
+packages = ["graphcrawl_ai"]
