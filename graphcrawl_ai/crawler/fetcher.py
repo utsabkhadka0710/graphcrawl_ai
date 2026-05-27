@@ -23,12 +23,12 @@ Handles:
 
 Returns raw HTML on fetching success for given URL.
 
-Raises http, protocal, network, timeout and other httpx exceptions on error during HTML fetching for a given URL.
+Raises http, protocol, network, timeout and various edge cases Excetions and error during HTML fetching for a given URL.
 """
 def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}
-    for attempt in range(retry): # For loop for timeout retry logic
+    for attempt in range(retry):
         try:
             logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt+1}")
 
