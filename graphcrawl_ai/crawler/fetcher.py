@@ -13,7 +13,7 @@ class FetchError(Exception): pass
 Raw HTML fetcher
 
 Handles:
-- reuests timeout
+- requests timeout
 - retry attempts on request timeouts
 - invalid URL error
 - HTTP error
@@ -23,7 +23,7 @@ Handles:
 
 Returns raw HTML on fetching success for given URL.
 
-Raises http, protocol, network, timeout and various edge cases Excetions and error during HTML fetching for a given URL.
+Raises http, protocol, network, timeout and various edge cases Exceptions and error during HTML fetching for a given URL.
 """
 def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
 
@@ -46,7 +46,7 @@ def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
         
         except httpx.HTTPStatusError as e:
              logging.error(f"Received error HTTP status code '4XX/5XX' | {e}")
-             raise FetchError(f"HTTP status code error, received {e.response.status_code} staus code from '{url}'.")
+             raise FetchError(f"HTTP status code error, received {e.response.status_code} status code from '{url}'.")
         
         except httpx.UnsupportedProtocol as e:
              logging.error(f"Given URl is missing 'http://' or 'https://' protocol | {e}")
