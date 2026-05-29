@@ -9,23 +9,23 @@ logging.basicConfig(
 
 class FetchError(Exception): pass
 
-"""
-Raw HTML fetcher
-
-Handles:
-- requests timeout
-- retry attempts on request timeouts
-- invalid URL error
-- HTTP error
-- network error
-- protocol error
-- status (4XX/5XX) code error
-
-Returns raw HTML on fetching success for given URL.
-
-Raises http, protocol, network, timeout and various edge cases Exceptions and error during HTML fetching for a given URL.
-"""
 def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
+    """
+    Raw HTML fetcher
+
+    Handles:
+    - requests timeout
+    - retry attempts on request timeouts
+    - invalid URL error
+    - HTTP error
+    - network error
+    - protocol error
+    - status (4XX/5XX) code error
+
+    Returns raw HTML on fetching success for given URL.
+
+    Raises http, protocol, network, timeout and various edge cases Exceptions and error during HTML fetching for a given URL.
+    """
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}
     for attempt in range(retry):
