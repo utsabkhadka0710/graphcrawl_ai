@@ -61,4 +61,4 @@ def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
              logging.info("Retrying...")
              if attempt==retry-1:
                 logging.critical(f"Maximum retry '{attempt+1}/{retry}' reached!!!")
-                raise FetchError(f"Timeout! retried maximum tried couldn't fetch HTML for given URL '{url}' try again later.")
+                raise FetchError(f"Timeout! retried maximum times couldn't fetch HTML for given URL '{url}' try again later.")
