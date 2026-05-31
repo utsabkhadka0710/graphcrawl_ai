@@ -1,14 +1,16 @@
 import re
 from bs4 import BeautifulSoup
+from graphcrawl_ai.models.page import ParsedContent
 
-def extract_text_from_html(html_content: str) -> str:
+def extract_text_from_html(html_content: str) -> ParsedContent:
     """
     Clean text parser from raw HTML
 
     remove unwanted noise from the HTML like nav, link, footer, style, script, etc
     parse the expected nois removed HTML into text
     cleans the text by removing unwanted spaces and lines
-    returns the final proper clean text
+    returns custom data model ScrapedPage which contains the 
+     - Document type 
     """
 
     noise_tags = [
@@ -32,13 +34,14 @@ def extract_text_from_html(html_content: str) -> str:
 
     for tag in soup.select(','.join(noise_tags)):
         tag.decompose()
-        
+    
+    title = soup.title.string if soup.title else "Title Not Found"
     clean_text = soup.get_text(separator=" ", strip=True)
     normalized_text = re.sub(r"\s{2,}",' ',clean_text)
 
-    return normalized_text
+    parsed_content = ParsedContent(
+        title = title,
+        content = normalized_text
+    )
 
-        
-
-
-    
+    return parsed_content
