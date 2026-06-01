@@ -2,7 +2,7 @@ import re
 from bs4 import BeautifulSoup
 from graphcrawl_ai.models.page import ParsedContent
 
-def extract_text_from_html(html_content: str) -> ParsedContent:
+def extract_content_from_html(html_content: str) -> ParsedContent:
     """
     Clean text parser from raw HTML
 
