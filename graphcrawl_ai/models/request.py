@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
 
-class QuickOptions(Enum):
+class QuickOption(Enum):
     SUMMARY = "summary"
     CONTACTS = "contacts"
     PRODUCTS = "products"
@@ -17,6 +17,6 @@ class ExtractionRequest(BaseModel):
     """
     source: str
     prompt: str | None = None
-    quick_options: QuickOptions | None = None
+    quick_option: QuickOption | None = None
 
 
