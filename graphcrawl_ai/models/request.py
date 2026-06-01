@@ -13,10 +13,10 @@ class ExtractionRequest(BaseModel):
     Represents extraction request made by user
 
     This is a model representation of what user requestse even before it hits the fetcher
-    includes the source and prompt/quick extraction(pre defined extraction options)
+    includes the source and prompt/quick extraction(pre defined extraction options) 
     """
     source: str
     prompt: str | None = None
-    quick_extraction: QuickOptions | None = None
+    quick_options: QuickOptions | None = None
 
 
