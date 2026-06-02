@@ -1,5 +1,6 @@
-from graphcrawl_ai.extraction.extraction_request import request
+from graphcrawl_ai.crawl import crawl_url
+import json
 
-x = request(source="https://github.com/utsabkhadka0710",quick_option="products")
+x = crawl_url(source="https://github.com/utsabkhadka0710",quick_option="summary")
 
-print(x.get('quick_option'))
+print(json.dumps(x, indent=4))
