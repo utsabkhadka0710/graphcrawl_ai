@@ -1,6 +1,5 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from enum import Enum
-from graphcrawl_ai.llm.promt_resolver.url_prompt_resolver import resolve_prompt
 
 class QuickOption(str, Enum):
     SUMMARY = "summary"
