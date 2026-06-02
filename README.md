@@ -332,7 +332,7 @@ python3 test.py
 }
 ```
 
-- This is output for crawing/scraping "https://example.com" with "auto" as quick_option.
+- This is output for crawing/scraping "https://example.com" with "auto" as quick_option. and "https://amazon.com/" with "products" as quick option.
 
 ---
 
