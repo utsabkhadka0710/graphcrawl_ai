@@ -1,5 +1,3 @@
-from graphcrawl_ai.crawler.fetcher import fetch_html
-from graphcrawl_ai.extraction.parser import extract_content_from_html
 from graphcrawl_ai.llm.promt_resolver.url_prompt_resolver import resolve_prompt
 from graphcrawl_ai.models.request import ExtractionRequestByUser, ExtractionRequestToLLM
 from graphcrawl_ai.llm.gemini_extractor import get_response_gemini
