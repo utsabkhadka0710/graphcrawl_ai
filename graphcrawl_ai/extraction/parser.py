@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from graphcrawl_ai.models.page import ParsedContent
+from graphcrawl_ai.models.response import ParsedContent
 
 def extract_content_from_html(html_content: str) -> ParsedContent:
     """
