@@ -26,7 +26,6 @@ graphcrawl_ai/
 │   └── utils/
 ├── api/
 │   ├── __init__.py
-│   ├── crawl.py
 │   ├── main.py
 │   └── routes/
 ├── test/
@@ -41,7 +40,7 @@ graphcrawl_ai/
 
 ## Status
 
-### 🚧 **Usable GraphCrawl AI - MVP/v.0.1.0 available.**
+### 🚧 **GraphCrawl AI - MVP/v.0.1.0 available.**
 
 - Still Improving. Not available on PyPI yet.
 
@@ -97,7 +96,7 @@ pip install -e .
 cp .env.example .env
 ```
 
-Edit `.env` with your Gemini API `**no white spaces & no quotation.**` Currently Gemini only avaiable more LLM providers options will be added in the future have some patience.
+Edit `.env` with your Gemini API `no white spaces & no quotation.` Currently Gemini only avaiable more LLM providers options will be added in the future have some patience.
 
 ```.env
 GEMINI_API=************************
@@ -105,14 +104,14 @@ GEMINI_API=************************
 
 **7. Test GraphCrawl AI with following script or write your own.**
 
-- `graphcrawl*ai/test.py*`
+- `graphcrawl_ai/test.py`
 
 ```Python
 from graphcrawl_ai.crawl import crawl_url
 import json
 
 url = "https://example.com"
-prompt = "Enter your prompt here & make sure you ask LLM to strictly response in JSON only or the crawl_ai() may fail."
+prompt = "Enter your prompt here & make sure you ask LLM to strictly response in JSON only or the crawl_url() may fail."
 
 # For testing I'd suggest you to just go available with quick options
 
