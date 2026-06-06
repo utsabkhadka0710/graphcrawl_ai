@@ -1,7 +1,7 @@
 import os, json
 from dotenv import load_dotenv
 from google import genai
-from graphcrawl_ai.models.request import ExtractionRequestToLLM
+from graphcrawl_ai.models.request_models.crawl_url_models.request_url_internal import ExtractionRequestToLLM
 
 load_dotenv()
 
