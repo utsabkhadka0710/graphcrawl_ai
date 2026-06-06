@@ -1,16 +1,37 @@
 from graphcrawl_ai.llm import prompts
-from graphcrawl_ai.models.request_models.crawl_url_models.request_url_user import ExtractionRequestByUser, QuickOption
+from graphcrawl_ai.models.request_models.crawl_url_models.request_url_user import UrlExtractionRequestByUser, QuickOption
 from graphcrawl_ai.models.request_models.crawl_url_models.request_url_internal import ExtractionRequestToLLM
 from graphcrawl_ai.crawler.fetcher import fetch_html
 from graphcrawl_ai.extraction.parser import extract_content_from_html
 
 
-def resolve_prompt(request: ExtractionRequestByUser) -> ExtractionRequestToLLM:
+def resolve_prompt(request: UrlExtractionRequestByUser) -> ExtractionRequestToLLM:
+    """Resolve user request parameters and prepare data for LLM consumption.
+
+    This function executes the initial data gathering phase by fetching and parsing 
+    the targeted raw HTML content. It then evaluates the user's criteria, maps any 
+    selected `QuickOption` tokens to their systemic prompt definitions, and bundles 
+    the structured payload into a standard schema optimized for LLM extraction.
+
+    Args:
+        request: The incoming data object containing user-defined configuration, 
+            source context, and extraction criteria.
+
+    Returns:
+        An ExtractionRequestToLLM object holding the sanitized web text content 
+        and the fully prepared, structure-enforced prompt directive.
+
+    Raises:
+        ValueError: If both `prompt` and `quick_option` parameters are missing from 
+            the inbound user request object.
+    """
     source = request.source
     prompt = request.prompt
-    quick_option = request.quick_option #request.quick_option hold an enum which is converted to str
+    quick_option = request.quick_option
+    timeout = request.timeout
+    retry = request.retry
 
-    raw_html = fetch_html(url=source)
+    raw_html = fetch_html(url=source,timeout=timeout, retry=retry)
     clean_content = extract_content_from_html(html_content=raw_html).content
 
     if not prompt and not quick_option:

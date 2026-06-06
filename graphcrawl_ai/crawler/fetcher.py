@@ -4,27 +4,31 @@ import logging
 # Basic logging configuration will replace it with proper logging in future.
 logging.basicConfig(
     level = logging.INFO,
-    format = "| %(asctime)s | %(levelname)s | %(message)s |"
+    format = "%(asctime)s | %(levelname)s | %(message)s"
 )
 
 class FetchError(Exception): pass
 
-def fetch_html(url:str = "", timeout:float = 5, retry:int = 3) -> str:
-    """
-    Raw HTML fetcher
+def fetch_html(url: str = "", timeout: float = 30, retry: int = 3) -> str:
+    """Fetch raw HTML content from a specified URL with retry logic.
 
-    Handles:
-    - requests timeout
-    - retry attempts on request timeouts
-    - invalid URL error
-    - HTTP error
-    - network error
-    - protocol error
-    - status (4XX/5XX) code error
+    This function dispatches synchronous HTTP GET requests to retrieve web content,
+    automatically resolving redirects. It isolates the pipeline from connection 
+    instability by implementing a retry mechanism specifically for timeout failures 
+    and translates lower-level network exceptions into unified high-level errors.
 
-    Returns raw HTML on fetching success for given URL.
+    Args:
+        url: The target web address to request data from.
+        timeout: The maximum duration in seconds to wait for a server response.
+        retry: The maximum number of connection attempts to make in case of timeouts.
 
-    Raises http, protocol, network, timeout and various edge cases Exceptions and error during HTML fetching for a given URL.
+    Returns:
+        The raw HTML string content fetched from the target URL.
+
+    Raises:
+        FetchError: If the URL is structurally malformed, missing its protocol,
+            encounters a non-200 HTTP status code, experiences general network 
+            failures, or exhausts all retry attempts following continuous timeouts.
     """
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}

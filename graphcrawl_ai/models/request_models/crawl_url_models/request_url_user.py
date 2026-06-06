@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Optional
 
 
 class QuickOption(str, Enum):
@@ -28,7 +29,11 @@ class UrlExtractionRequestByUser(BaseModel):
             Optional if a `quick_option` is selected.
         quick_option: A shortcut strategy mode. Mutually exclusive with `prompt` 
             in terms of application logic, but optional in the schema.
+        timeout: Maximum duration in seconds allowed for the underlying HTTP fetch request.
+        retry: Total attempt threshold allowed for establishing network connectivity.
     """
     source: str = Field(..., description="The target URL to crawl and scrape.")
     prompt: str | None = Field(None, description="Custom text instructions for the extraction.")
     quick_option: QuickOption | None = Field(None, description="Predefined shortcut mode for quick crawling.")
+    timeout: Optional[float] = Field(None, description="The connection timeout limit in seconds for the network request.")
+    retry: Optional[int] = Field(None, description="The count or configuration threshold for network retry attempts.")
