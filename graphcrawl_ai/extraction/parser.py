@@ -1,8 +1,8 @@
 import re
 from bs4 import BeautifulSoup
-from graphcrawl_ai.models.response import ParsedContent
+from graphcrawl_ai.models.response_models.crawl_url_models.response_url_internal import HtmlParsedContent
 
-def extract_content_from_html(html_content: str) -> ParsedContent:
+def extract_content_from_html(html_content: str) -> HtmlParsedContent:
     """
     Clean text parser from raw HTML
 
@@ -39,7 +39,7 @@ def extract_content_from_html(html_content: str) -> ParsedContent:
     clean_text = soup.get_text(separator=" ", strip=True)
     normalized_text = re.sub(r"\s{2,}",' ',clean_text)
 
-    parsed_content = ParsedContent(
+    parsed_content = HtmlParsedContent(
         title = title,
         content = normalized_text
     )

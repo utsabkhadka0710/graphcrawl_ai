@@ -1,5 +1,6 @@
 from graphcrawl_ai.llm import prompts
-from graphcrawl_ai.models.request import ExtractionRequestByUser, ExtractionRequestToLLM, QuickOption
+from graphcrawl_ai.models.request_models.crawl_url_models.request_url_user import ExtractionRequestByUser, QuickOption
+from graphcrawl_ai.models.request_models.crawl_url_models.request_url_internal import ExtractionRequestToLLM
 from graphcrawl_ai.crawler.fetcher import fetch_html
 from graphcrawl_ai.extraction.parser import extract_content_from_html
 
@@ -26,6 +27,20 @@ def resolve_prompt(request: ExtractionRequestByUser) -> ExtractionRequestToLLM:
             case QuickOption.AUTO:
                 prompt = prompts.auto
 
+    if prompt:
+        wrapped_prompt_from_user_prompt = f"""
+You are a precise web-scraping AI. Your task is to extract data from a web page based on the User Request.
+
+CRITICAL INSTRUCTION: You must return your response matching this exact JSON schema:
+{{
+    "status": "success" or "failure",
+    "response": [{ "... your extracted data goes here ... "}]
+}}
+
+User Request: "{prompt}"
+
+Based on the User Request, determine what fields need to be extracted, extract them from the provided context, and nest them entirely inside the "response" key. Do not add any markdown formatting (like ```json) outside the raw JSON string.
+"""
 
     request_to_llm = ExtractionRequestToLLM(
         content = clean_content,

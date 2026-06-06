@@ -31,6 +31,5 @@ and dynamically extract the most valuable, high-signal information present.\
 You must respond strictly with a valid JSON object. Do not include markdown formatting, markdown blocks, or any conversational text.\
 If the content violates safety policies, return the policy violation schema.\
 JSON Schemas:\
-Success: {"status": "success", "page_type": "detected type", "insights": {"title": "page title/headline", "core_data": {}, "metadata": {}}} (Note: code the \'core_data\' object with whatever dynamic key-value pairs best capture the page\'s core asset)\
+Success: {"status": "success", "response": [#Analyze the content and insert anything in string JSON anything that that you think is useful from the content.], "message": "short text description about the content"}\
 Policy Violation: {"status": "error", "message": "Sorry, this content violates safety policies."}"""
-
