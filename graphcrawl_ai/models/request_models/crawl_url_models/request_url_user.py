@@ -4,36 +4,63 @@ from typing import Optional
 
 
 class QuickOption(str, Enum):
-    """
-    Enumeration of predefined quick extraction shortcuts.
+    """List of choices for quick information gathering."""
 
-    Provides users with pre-configured crawling strategies, eliminating the 
-    need to manually compose a custom prompt for common extraction use cases.
-    """
     SUMMARY = "summary"
     CONTACTS = "contacts"
     PRODUCTS = "products"
     AUTO = "auto"
 
-class UrlExtractionRequestByUser(BaseModel):
-    """
-    Represents the raw extraction request submitted by the user.
 
-    This model serves as the initial landing schema for the `crawl_url()` endpoint. 
-    It captures and validates user inputs before the target URL is fetched or the 
-    prompt logic is resolved.
+class UrlExtractionRequest(BaseModel):
+    """
+    The setup information sent by a user to start reading a website.
+
+    This model holds the website link, what information to look for, 
+    and settings for how long to try reading the page before giving up.
 
     Attributes:
-        source: The target URL string to be crawled and scraped.
-        prompt: A custom natural language instruction for tailored extraction. 
-            Optional if a `quick_option` is selected.
-        quick_option: A shortcut strategy mode. Mutually exclusive with `prompt` 
-            in terms of application logic, but optional in the schema.
-        timeout: Maximum duration in seconds allowed for the underlying HTTP fetch request.
-        retry: Total attempt threshold allowed for establishing network connectivity.
+        source: The link to the website you want to read.
+        prompt: Your own written instructions on what to extract.
+        quick_option: A ready-made choice for quick information gathering.
+        llm_timeout: How many seconds to wait for the AI to answer.
+        llm_retry: How many times to try asking the AI again if it fails.
+        crawl_timeout: How many seconds to wait for the webpage to load.
+        crawl_retry: How many times to try loading the webpage again if it fails.
+        response_schema: A custom format provided by the user to organize the final output.
     """
-    source: str = Field(..., description="The target URL to crawl and scrape.")
-    prompt: str | None = Field(None, description="Custom text instructions for the extraction.")
-    quick_option: QuickOption | None = Field(None, description="Predefined shortcut mode for quick crawling.")
-    timeout: Optional[float] = Field(None, description="The connection timeout limit in seconds for the network request.")
-    retry: Optional[int] = Field(None, description="The count or configuration threshold for network retry attempts.")
+
+    __module__ = "graphcrawl_ai"
+
+    source: str = Field(
+        ...,
+        description="The link to the website you want to read."
+    )
+    prompt: str | None = Field(
+        None,
+        description="Your own written instructions on what to extract."
+    )
+    quick_option: QuickOption | None = Field(
+        None,
+        description="A ready-made choice for quick information gathering."
+    )
+    llm_timeout: Optional[float] = Field(
+        30,
+        description="How many seconds to wait for the AI to answer."
+    )
+    llm_retry: Optional[int] = Field(
+        3,
+        description="How many times to try asking the AI again if it fails."
+    )
+    crawl_timeout: Optional[float] = Field(
+        30,
+        description="How many seconds to wait for the webpage to load."
+    )
+    crawl_retry: Optional[int] = Field(
+        3,
+        description="How many times to try loading the webpage again if it fails."
+    )
+    response_schema: BaseModel | None = Field(
+        None,
+        description="A custom format provided by the user to organize the final output."
+    )

@@ -4,39 +4,37 @@ import logging
 # Basic logging configuration will replace it with proper logging in future.
 logging.basicConfig(
     level = logging.INFO,
-    format = "%(asctime)s | %(levelname)s | %(message)s"
+    format = "%(levelname)s | %(message)s"
 )
 
 class FetchError(Exception): pass
 
-def fetch_html(url: str = "", timeout: float = 30, retry: int = 3) -> str:
-    """Fetch raw HTML content from a specified URL with retry logic.
+def fetch_html(url: str = "", crawl_timeout: float = 30, crawl_retry: int = 3) -> str:
+    """Download the raw HTML content from a given web address.
 
-    This function dispatches synchronous HTTP GET requests to retrieve web content,
-    automatically resolving redirects. It isolates the pipeline from connection 
-    instability by implementing a retry mechanism specifically for timeout failures 
-    and translates lower-level network exceptions into unified high-level errors.
+    This function attempts to retrieve the webpage content by performing
+    a GET request with a custom user agent. It includes built-in retry
+    logic to handle temporary network or timeout issues.
 
     Args:
-        url: The target web address to request data from.
-        timeout: The maximum duration in seconds to wait for a server response.
-        retry: The maximum number of connection attempts to make in case of timeouts.
+        url: The web address to fetch content from.
+        crawl_timeout: The maximum time in seconds to wait for a response.
+        crawl_retry: The number of times to try fetching if a request fails.
 
     Returns:
-        The raw HTML string content fetched from the target URL.
+        The raw HTML string fetched from the URL.
 
-    Raises:
-        FetchError: If the URL is structurally malformed, missing its protocol,
-            encounters a non-200 HTTP status code, experiences general network 
-            failures, or exhausts all retry attempts following continuous timeouts.
+    Note:
+        The function raises a FetchError if the URL is invalid, returns an 
+        HTTP error code, or fails after all retry attempts are exhausted.
     """
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}
-    for attempt in range(retry):
+    for attempt in range(crawl_retry):
         try:
             logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt+1}")
 
-            response = httpx.get(url=url, timeout=timeout, headers=headers, follow_redirects=True) 
+            response = httpx.get(url=url, timeout=crawl_timeout, headers=headers, follow_redirects=True) 
             response.raise_for_status()
 
             raw_html_data = response.text
@@ -61,8 +59,8 @@ def fetch_html(url: str = "", timeout: float = 30, retry: int = 3) -> str:
             raise FetchError(f"Network error '{url}'.\nError: {e}")
         
         except httpx.TimeoutException as e:
-             logging.warning(f"Attempt {attempt+1}/{retry} failed due to time out.")
+             logging.warning(f"Attempt {attempt+1}/{crawl_retry} failed due to time out.")
              logging.info("Retrying...")
-             if attempt==retry-1:
-                logging.critical(f"Maximum retry '{attempt+1}/{retry}' reached!!!")
+             if attempt==crawl_retry-1:
+                logging.critical(f"Maximum retry '{attempt+1}/{crawl_retry}' reached!!!")
                 raise FetchError(f"Timeout! retried maximum times couldn't fetch HTML for given URL '{url}' try again later.")
