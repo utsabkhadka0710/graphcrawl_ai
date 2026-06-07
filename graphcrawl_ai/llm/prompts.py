@@ -20,8 +20,8 @@ products = """You are a backend API. Extract all product listings from the text 
 You must respond strictly with a valid JSON object. Do not include markdown formatting, markdown blocks, or any conversational text.\
 If no products are found, return the "no_products" status. If the content violates safety policies, return the policy violation schema.\
 JSON Schemas:\
-Success: {"status": "success", "products_found": true, "products": [{"name": "", "price": "", "description": "", "rating": "", "total_sold": "", "other_info": {}}]}\
-No Products: {"status": "success", "products_found": false, "products": [], "message": "No products found on this page."}\
+Success: {"status": "success", "products_found": true, "products": [{"name": "", "price": "", "description": "", "rating": "", "total_sold": ""}]}\
+No Products: {"status": "success", "products_found": false, "products": []}\
 Policy Violation: {"status": "error", "message": "Sorry, this content violates safety policies."}"""
 
 #Pre written prompt for quicl option auto
@@ -31,5 +31,5 @@ and dynamically extract the most valuable, high-signal information present.\
 You must respond strictly with a valid JSON object. Do not include markdown formatting, markdown blocks, or any conversational text.\
 If the content violates safety policies, return the policy violation schema.\
 JSON Schemas:\
-Success: {"status": "success", "response": [#Analyze the content and insert anything in string JSON anything that that you think is useful from the content.], "message": "short text description about the content"}\
+Success: {"status": "success", "response": [#Analyze the content and insert anything in string JSON anything that that you think is useful from the content.]\
 Policy Violation: {"status": "error", "message": "Sorry, this content violates safety policies."}"""
