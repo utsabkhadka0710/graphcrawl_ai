@@ -1,18 +1,11 @@
 from graphcrawl_ai.llm.request_resolver.user_url_request_resolver import resolve_url_request
-from graphcrawl_ai.models.request_models.crawl_url_models.request_url_user import UrlExtractionRequest
+from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest
 from graphcrawl_ai.llm.gemini_extractor import get_response_gemini
 from typing import Literal, Optional, TypeVar
 from pydantic import BaseModel
 
-from graphcrawl_ai.models.response_models.crawl_url_models.response_url_llm import (
-    UrlPromptResponse,
-    UrlSummaryResponse,
-    UrlContactsResponse,
-    UrlProductsResponse,
-    UrlAutoResponse
-)
 
-CrawlUrlResponse = TypeVar("T", bound=BaseModel)
+CrawlUrlResponse = TypeVar("ResponseSchema",bound=BaseModel)
 
 def crawl_url(source: str,
               prompt: str = None, 
