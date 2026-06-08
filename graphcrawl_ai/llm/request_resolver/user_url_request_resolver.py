@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 from graphcrawl_ai.llm import prompts
-from graphcrawl_ai.crawler.fetcher import fetch_html
-from graphcrawl_ai.extraction.parser import extract_content_from_html
-from graphcrawl_ai.models.request_models.crawl_url_models.request_url_user import UrlExtractionRequest, QuickOption
-from graphcrawl_ai.models.request_models.crawl_url_models.request_url_llm import ExtractionRequestToLLM
-from graphcrawl_ai.models.response_models.crawl_url_models.response_url_llm import (
+from graphcrawl_ai.extraction.html_from_url import fetch_html
+from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
+from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, QuickOption
+from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionRequestToLLM
+from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
     UrlPromptResponse,
     UrlSummaryResponse,
     UrlContactsResponse,

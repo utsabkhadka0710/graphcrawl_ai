@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 from typing import TypeVar
 from pydantic import BaseModel
-from graphcrawl_ai.models.request_models.crawl_url_models.request_url_llm import ExtractionRequestToLLM
+from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionRequestToLLM
 
 ResponseSchema = TypeVar("T", bound=BaseModel)
 
