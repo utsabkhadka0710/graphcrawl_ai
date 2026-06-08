@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from graphcrawl_ai.models.response_models.crawl_url_models.response_url_parser import HtmlParsedContent
+from graphcrawl_ai.models.crawl_url.response_models.parser_response import HtmlParsedContent
 
 def extract_content_from_html(html_content: str) -> HtmlParsedContent:
     """Parse and sanitize raw HTML into structured text.
