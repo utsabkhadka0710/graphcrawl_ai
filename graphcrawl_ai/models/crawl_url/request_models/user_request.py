@@ -45,19 +45,19 @@ class UrlExtractionRequest(BaseModel):
         None,
         description="A ready-made choice for quick information gathering."
     )
-    llm_timeout: Optional[float] = Field(
+    llm_timeout: Optional[int] = Field(
         30,
         description="How many seconds to wait for the AI to answer."
     )
-    llm_retry: Optional[float] = Field(
+    llm_retry: Optional[int] = Field(
         3,
         description="How many times to try asking the AI again if it fails."
     )
-    crawl_timeout: Optional[float] = Field(
+    crawl_timeout: Optional[int] = Field(
         30,
         description="How many seconds to wait for the webpage to load."
     )
-    crawl_retry: Optional[float] = Field(
+    crawl_retry: Optional[int] = Field(
         3,
         description="How many times to try loading the webpage again if it fails."
     )
