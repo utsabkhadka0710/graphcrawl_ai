@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional, Literal
 
 
 class QuickOption(str, Enum):
@@ -11,6 +11,7 @@ class QuickOption(str, Enum):
     PRODUCTS = "products"
     AUTO = "auto"
 
+AvailableQuickOption = Literal["summary","contacts","products","auto"]
 
 class UrlExtractionRequest(BaseModel):
     """
@@ -48,7 +49,7 @@ class UrlExtractionRequest(BaseModel):
         30,
         description="How many seconds to wait for the AI to answer."
     )
-    llm_retry: Optional[int] = Field(
+    llm_retry: Optional[float] = Field(
         3,
         description="How many times to try asking the AI again if it fails."
     )
@@ -56,7 +57,7 @@ class UrlExtractionRequest(BaseModel):
         30,
         description="How many seconds to wait for the webpage to load."
     )
-    crawl_retry: Optional[int] = Field(
+    crawl_retry: Optional[float] = Field(
         3,
         description="How many times to try loading the webpage again if it fails."
     )
