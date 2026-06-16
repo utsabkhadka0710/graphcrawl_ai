@@ -61,7 +61,7 @@ class UrlExtractionRequest(BaseModel):
         3,
         description="How many times to try loading the webpage again if it fails."
     )
-    response_schema: BaseModel | None = Field(
+    response_schema: type[BaseModel] | None = Field(
         None,
         description="A custom format provided by the user to organize the final output."
     )
