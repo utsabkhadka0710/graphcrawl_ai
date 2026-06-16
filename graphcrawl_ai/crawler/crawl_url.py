@@ -21,7 +21,7 @@ def crawl_url(source: str = None,
               llm_retry: Optional[float] = 3,
               crawl_timeout: Optional[float] = 30, 
               crawl_retry: Optional[float] = 3,
-              response_schema: BaseModel| None = None 
+              response_schema: type[BaseModel] | None = None 
             ) -> CrawlUrlResponse:
     """Read a website and extract specific information from it using AI.
 
