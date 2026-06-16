@@ -26,7 +26,17 @@ class PromptMissingError(CrawlError):
                 "both 'prompt' and 'quick_option' are missing or are empty in crawl_url(), "
                 "Expected: crawl_url(source='https://example.com', prompt='Extraction prompt here...') "
                 "or crawl_url(source='https://example.com', quick_option='Available QuickOption')\n"
-                "please enter a custom extraction prompt or select one of available quick_option"
+                "Please enter a custom extraction prompt or select one of available quick_option"
             )
         super().__init__(message)
 
+
+class InvalidDataError(CrawlError):
+    """Raises when parameters with wrong data types which is invalid or cannot be typecasted crawl_url()"""
+    __module__ = "graphcrawl_ai"
+    def __init__(self,param_name:str="unknown", message:any=None):
+        if message is None:
+            message = (
+                f"Invalid data type provided for parameter '{param_name}'"
+            )
+        super().__init__(message)    
