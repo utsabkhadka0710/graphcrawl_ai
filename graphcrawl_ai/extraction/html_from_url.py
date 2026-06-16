@@ -9,7 +9,7 @@ logging.basicConfig(
 
 class FetchError(Exception): pass
 
-def fetch_html(url: str = "", crawl_timeout: float = 30, crawl_retry: int = 3) -> str:
+def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> str:
     """Download the raw HTML content from a given web address.
 
     This function attempts to retrieve the webpage content by performing
