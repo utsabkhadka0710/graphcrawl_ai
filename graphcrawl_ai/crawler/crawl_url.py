@@ -7,7 +7,8 @@ from pydantic import BaseModel, ValidationError
 # Exceptions imports
 from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
     UrlMissingError,
-    PromptMissingError
+    PromptMissingError,
+    InvalidDataError
 )
 
 
@@ -57,19 +58,24 @@ def crawl_url(source: str = None,
          raise
     
     request_by_user: UrlExtractionRequest = None
-    from math import ceil
-    request_by_user = UrlExtractionRequest(
-        source = source,
-        prompt = prompt,
-        quick_option = quick_option,
-        llm_timeout = ceil(float(llm_timeout)),
-        llm_retry = ceil(float(llm_retry)),
-        crawl_timeout = ceil(float(crawl_timeout)),
-        crawl_retry = ceil(float(crawl_retry)),
-        response_schema = response_schema
-    )
 
-
+    from graphcrawl_ai.utils.safe_cast import safe_cast
+    try:
+        request_by_user = UrlExtractionRequest(
+            source = source,
+            prompt = prompt,
+            quick_option = quick_option,
+            llm_timeout = safe_cast(llm_timeout, 'llm_timeout'),
+            llm_retry = safe_cast(llm_retry, 'llm_retry'),
+            crawl_timeout = safe_cast(crawl_timeout, 'crawl_timeout'),
+            crawl_retry = safe_cast(crawl_retry, 'crawl_retry'),
+            response_schema = response_schema
+        )
+    except ValidationError as e:
+        err_msg = e.errors()
+        failed_param = err_msg[0]["loc"][0]
+        raise InvalidDataError(param_name=failed_param)
+    
     request_to_llm, response_schema = resolve_url_request(request=request_by_user)
     
     response_from_llm = get_response_gemini(request=request_to_llm, response_schema=response_schema)
