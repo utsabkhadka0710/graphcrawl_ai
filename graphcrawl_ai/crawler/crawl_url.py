@@ -1,56 +1,85 @@
 from graphcrawl_ai.llm.request_resolver.user_url_request_resolver import resolve_url_request
-from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest
+from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, AvailableQuickOption
 from graphcrawl_ai.llm.gemini_extractor import get_response_gemini
-from typing import Literal, Optional, TypeVar
-from pydantic import BaseModel
+from typing import Literal, Optional, TypeVar, get_args
+from pydantic import BaseModel, ValidationError
+
+# Exceptions imports
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
+    UrlMissingError,
+    PromptMissingError,
+    InvalidDataError
+)
 
 
 CrawlUrlResponse = TypeVar("ResponseSchema",bound=BaseModel)
 
-def crawl_url(source: str,
+def crawl_url(source: str = None,
               prompt: str = None, 
-              quick_option: Literal["summary","contacts","products","auto"] = None, 
+              quick_option: AvailableQuickOption = None, 
               llm_timeout: Optional[float] = 60,
-              llm_retry: Optional[int] = 3,
-              timeout: Optional[float] = 30, 
-              retry: Optional[int] = 3,
-              response_schema: type[CrawlUrlResponse] | None = None 
+              llm_retry: Optional[float] = 3,
+              crawl_timeout: Optional[float] = 30, 
+              crawl_retry: Optional[float] = 3,
+              response_schema: type[BaseModel] | None = None 
             ) -> CrawlUrlResponse:
-    """Read a website and extract specific information from it using AI.
+    """
+    Scrapes a webpage and extracts structured data using an AI model.
 
-    This function coordinates the whole process: it loads the requested website, 
-    cleans up the text, picks the right instructions or template, and sends everything 
-    to the AI engine to get your final organized answer.
+    This function handles the end-to-end process: validating user input, 
+    preparing the request, and querying the Gemini AI to extract information 
+    based on the provided prompt or quick option.
 
     Args:
-        source: The link to the website you want to read.
-        prompt: Your own written instructions on what to look for.
-        quick_option: A ready-made choice like summary, contacts, products, or auto.
-        llm_timeout: How many seconds to wait for the AI to answer.
-        llm_retry: How many times to try asking the AI again if it fails.
-        timeout: How many seconds to wait for the webpage to load.
-        retry: How many times to try loading the webpage again if it fails.
-        response_schema: A custom format model if you want the output in a specific layout.
+        source (str): The URL of the website to scrape.
+        prompt (str, optional): Custom instructions for the AI on what to extract.
+        quick_option (AvailableQuickOption, optional): A predefined extraction mode 
+            (e.g., 'summary', 'contacts').
+        llm_timeout (float, optional): Maximum time (seconds) to wait for AI response.
+        llm_retry (float, optional): Number of times to retry the AI request on failure.
+        crawl_timeout (float, optional): Maximum time (seconds) to wait for page load.
+        crawl_retry (float, optional): Number of times to retry the page load on failure.
+        response_schema (type[BaseModel], optional): A Pydantic model to enforce the 
+            structure of the AI output.
 
     Returns:
-        An object holding the final organized answers found on the website.
+        CrawlUrlResponse: The extracted data structured according to the provided schema.
 
-    Note:
-        You need to give either a custom prompt or choose a quick option so the 
-        system knows what information you are looking for.
+    Raises:
+        UrlMissingError: If the 'source' argument is missing or an empty string.
+        PromptMissingError: If neither a 'prompt' nor a 'quick_option' is provided.
+        InvalidDataError: If any of the provided parameters fail validation checks.
     """
     
-    request_by_user = UrlExtractionRequest(
-        source = source,
-        prompt = prompt,
-        quick_option = quick_option,
-        llm_timeout = llm_timeout,
-        llm_retry = llm_retry,
-        crawl_timeout = timeout,
-        crawl_retry = retry,
-        response_schema = response_schema
-    )
+    if source is None or str(source).strip() == "":
+        raise UrlMissingError
 
+    if (prompt is None or str(prompt).strip() == "" ) and (quick_option is None or str(quick_option).strip() == ""):
+            raise PromptMissingError
+    
+    timeout_and_retry_params = (llm_timeout, llm_retry, crawl_timeout, crawl_retry)
+    if all(isinstance(param, str) and not param.isdigit() for param in timeout_and_retry_params):
+         raise
+    
+    request_by_user: UrlExtractionRequest = None
+
+    from graphcrawl_ai.utils.safe_cast import safe_cast
+    try:
+        request_by_user = UrlExtractionRequest(
+            source = source,
+            prompt = prompt,
+            quick_option = quick_option,
+            llm_timeout = safe_cast(llm_timeout, 'llm_timeout'),
+            llm_retry = safe_cast(llm_retry, 'llm_retry'),
+            crawl_timeout = safe_cast(crawl_timeout, 'crawl_timeout'),
+            crawl_retry = safe_cast(crawl_retry, 'crawl_retry'),
+            response_schema = response_schema
+        )
+    except ValidationError as e:
+        err_msg = e.errors()
+        failed_param = err_msg[0]["loc"][0]
+        raise InvalidDataError(param_name=failed_param)
+    
     request_to_llm, response_schema = resolve_url_request(request=request_by_user)
     
     response_from_llm = get_response_gemini(request=request_to_llm, response_schema=response_schema)

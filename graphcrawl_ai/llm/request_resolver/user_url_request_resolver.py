@@ -43,9 +43,6 @@ def resolve_url_request(request: UrlExtractionRequest) -> tuple[ExtractionReques
     crawl_retry = request.crawl_retry
     response_schema = UrlPromptResponse
 
-    if not prompt and not quick_option:
-        raise ValueError("Prompt missing in the incomming request, request() must have either a prompt or an provided quick option.")
-
     if quick_option and not prompt:
         match quick_option:
             case QuickOption.SUMMARY:
