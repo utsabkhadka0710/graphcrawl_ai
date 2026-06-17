@@ -1,5 +1,12 @@
 import httpx
 import logging
+from graphcrawl_ai.exceptions.extration.html_from_url_exceptions import(
+    InvalidUrl,
+    HTTPStatusError,
+    ProtocolError,
+    NetworkError,
+    RetryTimeoutError
+)
 
 # Basic logging configuration will replace it with proper logging in future.
 logging.basicConfig(
@@ -7,32 +14,30 @@ logging.basicConfig(
     format = "%(levelname)s | %(message)s"
 )
 
-class FetchError(Exception): pass
-
 def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> str:
     """Download the raw HTML content from a given web address.
 
-    This function attempts to retrieve the webpage content by performing
-    a GET request with a custom user agent. It includes built-in retry
-    logic to handle temporary network or timeout issues.
+    This function connects to a website, downloads its layout and text, and returns 
+    the raw page content. It includes automatic fallback systems to try loading the 
+    webpage again if a timeout occurs or if the connection drops.
 
     Args:
-        url: The web address to fetch content from.
-        crawl_timeout: The maximum time in seconds to wait for a response.
-        crawl_retry: The number of times to try fetching if a request fails.
+        url: The link to the website you want to read.
+        crawl_timeout: How many seconds to wait for the webpage to load.
+        crawl_retry: How many times to try loading the webpage again if it fails.
 
     Returns:
-        The raw HTML string fetched from the URL.
+        The raw text and layout string saved directly from the website.
 
     Note:
-        The function raises a FetchError if the URL is invalid, returns an 
-        HTTP error code, or fails after all retry attempts are exhausted.
+        This function stops and issues specific errors if the link is typed wrong, 
+        if the website fails to load, or if all retry attempts are used up.
     """
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}
-    for attempt in range(crawl_retry):
+    for attempt in range(1, crawl_retry+1):
         try:
-            logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt+1}")
+            logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt}")
 
             response = httpx.get(url=url, timeout=crawl_timeout, headers=headers, follow_redirects=True) 
             response.raise_for_status()
@@ -42,25 +47,24 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
 
             return raw_html_data
         
-        except httpx.InvalidURL as e:
-             logging.error(f"Invalid URL provided! | {e}")
-             raise FetchError(f"Invalid URL! '{url}'")
+        except httpx.InvalidURL:
+            raise InvalidUrl(url=url)
         
         except httpx.HTTPStatusError as e:
-             logging.error(f"Received error HTTP status code '4XX/5XX' | {e}")
-             raise FetchError(f"HTTP status code error, received {e.response.status_code} status code from '{url}'.")
+            status_code = e.response.status_code
+            if 500 <= status_code < 600 and attempt<crawl_retry:
+                logging.warning(f"Server error{status_code}. Retrying...")
+            raise HTTPStatusError(status_code=status_code, url=url)
         
-        except httpx.UnsupportedProtocol as e:
-             logging.error(f"Given URl is missing 'http://' or 'https://' protocol | {e}")
-             raise FetchError(f"Given URl '{url}' is missing 'http://' or 'https://' protocol.")
+        except httpx.UnsupportedProtocol:
+             raise ProtocolError(url=url)
         
         except httpx.NetworkError as e:
-            logging.error(f"Network error: {e}")
-            raise FetchError(f"Network error '{url}'.\nError: {e}")
+            raise NetworkError(err_msg=e)
         
         except httpx.TimeoutException as e:
-             logging.warning(f"Attempt {attempt+1}/{crawl_retry} failed due to time out.")
-             logging.info("Retrying...")
-             if attempt==crawl_retry-1:
-                logging.critical(f"Maximum retry '{attempt+1}/{crawl_retry}' reached!!!")
-                raise FetchError(f"Timeout! retried maximum times couldn't fetch HTML for given URL '{url}' try again later.")
+            logging.warning(f"Attempt {attempt}/{crawl_retry} failed due to time out.")
+            if attempt==crawl_retry-1:
+                logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
+                raise RetryTimeoutError(url=url, attempt=attempt+1, max_retry=crawl_retry)
+            logging.info("Retrying...")
