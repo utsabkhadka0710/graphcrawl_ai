@@ -1,42 +1,57 @@
 from abc import ABC
+
 class CrawlError(Exception, ABC):
+    """
+    Base class for all exceptions related to the 'crawl_url()' feature.
+    
+    All custom crawler errors should inherit from this class to allow for 
+    uniform error handling across the library.
+    """
     __module__ = 'graphcrawl_ai'
-    """Base class for exception related to calling feature 'crawl_url()"""
     pass
 
 class UrlMissingError(CrawlError):
-    """Raised when the requied URL source parameter is missing or is empty"""
+    """
+    Raised when the required 'source' (URL) parameter is missing or empty.
+
+    Action: Ensure a valid URL string is passed to the 'source' argument.
+    """
     __module__ = "graphcrawl_ai"
-    def __init__(self, message:any=None):
+    def __init__(self, message: any = None):
         if message is None:
             message = (
-                "'source' is missing or is empty in crawl_url(), "
-                "Expected: crawl_url(source='http://example.com', ...)\n"
-                "Please enter a valid URL string in 'source' parameter."
-            )
-            super().__init__(message)
-
-
-class PromptMissingError(CrawlError):
-    """Raises when the one of either prompt or quick_option is missing or is empty"""
-    __module__ = "graphcrawl_ai"
-    def __init__(self, message:any=None):
-        if message is None:
-            message = (
-                "both 'prompt' and 'quick_option' are missing or are empty in crawl_url(), "
-                "Expected: crawl_url(source='https://example.com', prompt='Extraction prompt here...') "
-                "or crawl_url(source='https://example.com', quick_option='Available QuickOption')\n"
-                "Please enter a custom extraction prompt or select one of available quick_option"
+                "'source' is missing or empty in crawl_url(). "
+                "Expected usage: crawl_url(source='https://example.com', ...)"
             )
         super().__init__(message)
 
+class PromptMissingError(CrawlError):
+    """
+    Raised when both 'prompt' and 'quick_option' arguments are missing or empty.
 
-class InvalidDataError(CrawlError):
-    """Raises when parameters with wrong data types which is invalid or cannot be typecasted crawl_url()"""
+    Action: Provide either a custom string for 'prompt' or select a valid 
+    'quick_option' to define the extraction goals.
+    """
     __module__ = "graphcrawl_ai"
-    def __init__(self,param_name:str="unknown", message:any=None):
+    def __init__(self, message: any = None):
         if message is None:
             message = (
-                f"Invalid data type provided for parameter '{param_name}'"
+                "Both 'prompt' and 'quick_option' are missing. "
+                "You must provide at least one of these to instruct the AI."
             )
-        super().__init__(message)    
+        super().__init__(message)
+
+class InvalidDataError(CrawlError):
+    """
+    Raised when a parameter contains an unsupported data type or value 
+    that cannot be processed by the crawler.
+
+    Attributes:
+        param_name (str): The name of the parameter that failed validation.
+    """
+    __module__ = "graphcrawl_ai"
+    def __init__(self, param_name: str = "unknown", message: any = None):
+        self.param_name = param_name
+        if message is None:
+            message = f"Invalid data provided for parameter: '{param_name}'."
+        super().__init__(message)
