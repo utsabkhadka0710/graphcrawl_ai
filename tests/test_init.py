@@ -1,4 +1,4 @@
-from graphcrawl_ai.crawl import crawl_url
+from graphcrawl_ai import crawl_url
 import json
 
 url = "https://www.amazon.com/s?k=gaming+headphone"
