@@ -32,11 +32,11 @@ class ExtractionJobToLLM(BaseModel):
         ...,
         description="The template model used to shape and format the AI's answer."
     )
-    llm_timeout: Optional[float] = Field(
+    llm_timeout: Optional[int] = Field(
         60, 
         description="How many seconds to wait for the AI to answer."
     )
-    llm_retry: Optional[float] = Field(
+    llm_retry: Optional[int] = Field(
         3, 
         description="How many times to try asking the AI again if it fails."
     )
