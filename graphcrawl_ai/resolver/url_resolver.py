@@ -3,7 +3,7 @@ from graphcrawl_ai.llm import prompts
 from graphcrawl_ai.extraction.html_from_url import fetch_html
 from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
 from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, QuickOption
-from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionRequestToLLM
+from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
 from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
     UrlPromptResponse,
     UrlSummaryResponse,
@@ -12,7 +12,7 @@ from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
     UrlAutoResponse
 )
 
-def resolve_url_request(request: UrlExtractionRequest) -> tuple[ExtractionRequestToLLM, type[BaseModel]]:
+def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     """Download website text and match it with the correct AI instructions and template.
 
     This function handles the heavy lifting of loading the webpage, cleaning up 
@@ -63,15 +63,16 @@ def resolve_url_request(request: UrlExtractionRequest) -> tuple[ExtractionReques
 
     raw_html = fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
     clean_content = extract_content_from_html(html_content=raw_html).content
+    
+    if request.response_schema is not None:
+        response_schema = request.response_schema
 
-    request_to_llm = ExtractionRequestToLLM(
+    request_to_llm = ExtractionJobToLLM(
         content = clean_content,
         prompt = prompt,
+        response_schema = response_schema,
         llm_timeout = llm_timeout,
         llm_retry = llm_retry
     )
 
-    if request.response_schema is not None:
-        response_schema = request.response_schema
-
-    return request_to_llm, response_schema
+    return request_to_llm

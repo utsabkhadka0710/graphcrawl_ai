@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional, Literal
+from typing import Optional, Literal, Any, ParamSpecKwargs
 
 
 class QuickOption(str, Enum):
@@ -12,6 +12,12 @@ class QuickOption(str, Enum):
     AUTO = "auto"
 
 AvailableQuickOption = Literal["summary","contacts","products","auto"]
+
+class ConfigLLM(BaseModel):
+    model: str
+    api: str
+    response_model: type[BaseModel]
+    
 
 class UrlExtractionRequest(BaseModel):
     """
@@ -45,6 +51,18 @@ class UrlExtractionRequest(BaseModel):
         None,
         description="A ready-made choice for quick information gathering."
     )
+    model: str = Field(
+        ...,
+        description="LLM model used for extraction"
+    )
+    api_key: Optional[str] = Field(
+        ...,
+        description="api key of the model"
+    )
+    response_schema: type[BaseModel] | None = Field(
+        None,
+        description="A custom format provided by the user to organize the final output."
+    )
     llm_timeout: Optional[int] = Field(
         30,
         description="How many seconds to wait for the AI to answer."
@@ -60,8 +78,4 @@ class UrlExtractionRequest(BaseModel):
     crawl_retry: Optional[int] = Field(
         3,
         description="How many times to try loading the webpage again if it fails."
-    )
-    response_schema: type[BaseModel] | None = Field(
-        None,
-        description="A custom format provided by the user to organize the final output."
     )

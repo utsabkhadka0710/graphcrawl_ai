@@ -1,5 +1,7 @@
 from graphcrawl_ai import crawl_url
-import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 url = "https://www.amazon.com/s?k=gaming+headphone"
 prompt = "Extract a detail imformation about this user with thh cotacts if any"
@@ -8,7 +10,11 @@ prompt = "Extract a detail imformation about this user with thh cotacts if any"
 
 # Here I'm testing with quick otion "auto" which LLM decides itself what's best to crawl
 # Available quick options: "summary", "contacts", "products", "auto" try it and experiment yourself
-response = crawl_url(source=url, quick_option='products')
+response = crawl_url(
+    source=url,
+    quick_option='products',
+    model="gemini/gemini-2-flash"
+    )
 
 print(response)
 print(response.model_dump())

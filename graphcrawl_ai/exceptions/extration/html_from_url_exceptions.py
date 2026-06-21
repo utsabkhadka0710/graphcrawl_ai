@@ -6,6 +6,7 @@ class FetchError(Exception, ABC):
     This acts as the base container for all specific issues that might 
     come up while downloading a website's content.
     """
+    __module__ = "graphcrawl_ai"
     pass
 
 class InvalidUrl(FetchError):
