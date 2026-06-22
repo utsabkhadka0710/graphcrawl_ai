@@ -147,7 +147,7 @@ crawl_url(
 ) -> BaseModel
 ```
 
-- `source` and `model` are required. `model` is the `litellm`-style provider/model string (e.g. `"gemini/gemini-2.0-flash"`, `"openai/gpt-4o"`).
+- `source` and `model` are required. `model` is the `litellm`-style provider/model string (e.g. `"gemini/gemini-2.5-flash"`, `"openai/gpt-4o"`).
 - You must provide either `prompt` or `quick_option` — not neither (raises `PromptMissingError`). If you provide both, `prompt` wins for instructions, but if `quick_option` is also set, its associated response schema is still used unless you also pass `response_schema` explicitly.
 - `api_key` is optional — omit it to let `litellm` resolve credentials from the environment instead (see [Configuration](#configuration)).
 
@@ -178,7 +178,7 @@ This has only been exercised against Gemini models so far in this project's own 
 result = crawl_url(
     source="https://company.com/contact",
     quick_option="contacts",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
 )
 
 print(result.contact_info.emails)
@@ -192,7 +192,7 @@ print(result.contact_info.social_links)
 result = crawl_url(
     source="https://shop.example.com/category/headphones",
     quick_option="products",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
 )
 
 for product in result.products:
@@ -205,7 +205,7 @@ for product in result.products:
 result = crawl_url(
     source="https://techblog.example.com/article",
     prompt="Extract the author name, publication date, and all external links mentioned.",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
 )
 
 for item in result.response:
@@ -230,7 +230,7 @@ class JobPosting(BaseModel):
 result = crawl_url(
     source="https://jobs.example.com/posting/123",
     prompt="Extract the job title, company, location, salary, and requirements.",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     response_schema=JobPosting
 )
 
@@ -244,7 +244,7 @@ print(result.requirements)
 result = crawl_url(
     source="https://slow-site.example.com",
     quick_option="summary",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     crawl_timeout=60,  # seconds to wait for the webpage
     crawl_retry=5,     # retry attempts for the HTTP fetch
     llm_timeout=120,   # seconds to wait for the LLM
@@ -264,7 +264,7 @@ All responses extend `UrlBaseResponse` which carries a `status` field (`"success
 result = crawl_url(
     source="https://example.com",
     quick_option="summary",
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
 )
 
 print(result.status)                    # "success"
@@ -338,7 +338,7 @@ try:
     result = crawl_url(
         source="https://example.com",
         quick_option="summary",
-        model="gemini/gemini-2.0-flash",
+        model="gemini/gemini-2.5-flash",
     )
 except UrlMissingError:
     print("No source URL was provided.")
