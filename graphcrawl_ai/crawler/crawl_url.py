@@ -59,12 +59,7 @@ def crawl_url(source: str = None,
     if (prompt is None or str(prompt).strip() == "" ) and (quick_option is None or str(quick_option).strip() == ""):
             raise PromptMissingError
     
-    timeout_and_retry_params = (llm_timeout, llm_retry, crawl_timeout, crawl_retry)
-    if all(isinstance(param, str) and not param.isdigit() for param in timeout_and_retry_params):
-         raise
-    
     request_by_user: UrlExtractionRequest = None
-
     from graphcrawl_ai.utils.safe_cast import safe_cast
     try:
         request_by_user = UrlExtractionRequest(
