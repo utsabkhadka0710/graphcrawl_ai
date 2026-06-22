@@ -13,7 +13,7 @@ prompt = "Extract a detail imformation about this user with thh cotacts if any"
 response = crawl_url(
     source=url,
     quick_option='products',
-    model="gemini/gemini-2-flash"
+    model="gemini/gemini-2.5-flash"
     )
 
 print(response)
