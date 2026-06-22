@@ -55,8 +55,8 @@ class UrlExtractionRequest(BaseModel):
         ...,
         description="LLM model used for extraction"
     )
-    api_key: Optional[str] = Field(
-        ...,
+    api_key: Optional[str] | None = Field(
+        None,
         description="api key of the model"
     )
     response_schema: type[BaseModel] | None = Field(
