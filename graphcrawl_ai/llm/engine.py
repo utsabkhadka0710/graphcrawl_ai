@@ -43,21 +43,29 @@ def llm_extract(request:type[ExtractionJobToLLM]) -> type[BaseModel]:
     prompt = request.prompt
     timeout = request.llm_timeout
     retry = request.llm_retry
+    model = request.model
+    api_key = request.api_key
     response_schema = request.response_schema
 
     client = CLIENT()
 
     try:
+        from datetime import datetime
+        start_time=datetime.now()
         response = client.sync_client().create(
+            model=model,
+            api_key = api_key,
+            response_model=response_schema,
+            timeout=timeout,
+            num_retries=retry,
+            max_retries=retry,
             messages=[
                 {'role':'system','content':prompt},
                 {'role':'user','content':content}
             ],
-            model='gemini/gemini-3.1-flash-lite',
-            response_model=response_schema,
-            timeout=timeout,
-            max_retries=retry
+            
         )
+        print(datetime.now()-start_time)
     except InstructorError as e:
         raise _map_exceptions(exception=e)
 
