@@ -28,6 +28,14 @@ class ExtractionJobToLLM(BaseModel):
         ..., 
         description="The final instructions telling the AI what to look for."
     )
+    model: str = Field(
+        ...,
+        description="LLM model used for extraction"
+    )
+    api_key: Optional[str] = Field(
+        ...,
+        description="api key of the model"
+    )
     response_schema: type[BaseModel] = Field(
         ...,
         description="The template model used to shape and format the AI's answer."
