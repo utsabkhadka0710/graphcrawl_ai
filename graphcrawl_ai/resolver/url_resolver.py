@@ -37,6 +37,8 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     source = request.source
     prompt = request.prompt
     quick_option = request.quick_option
+    model = request.model
+    api_key = request.api_key
     llm_timeout = request.llm_timeout
     llm_retry = request.llm_retry
     crawl_timeout = request.crawl_timeout
@@ -70,6 +72,8 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     request_to_llm = ExtractionJobToLLM(
         content = clean_content,
         prompt = prompt,
+        model = model,
+        api_key = api_key,
         response_schema = response_schema,
         llm_timeout = llm_timeout,
         llm_retry = llm_retry
