@@ -28,7 +28,9 @@ class LLMRetryError(LLMError):
     def __init__(self, message:any = None):
         if message is None:
             message = (
-                "Ret"
+                "LLM extraction operation failed after the maximum number of retry attempts. "
+                "This error is likely related to the provider. "
+                "Please try again later or contact the provider's customer support if this issue persists."
             )
         super().__init__(message)
 
