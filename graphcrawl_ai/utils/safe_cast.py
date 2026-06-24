@@ -1,15 +1,6 @@
 import math
 from typing import Any, Optional
-from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import CrawlError
-class InvalidDataError(CrawlError):
-    """Custom exception raised when data conversion fails."""
-    __module__ = "graphcrawl_ai"
-
-    def __init__(self, param_name: str):
-        self.param_name = param_name
-        super().__init__(
-            f"Invalid value for parameter '{param_name}'. Expected a 'numeric' type or 'None'."
-        )
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import InvalidDataError
 
 def safe_cast(value: Any, param_name: str) -> Optional[int]:
     """
