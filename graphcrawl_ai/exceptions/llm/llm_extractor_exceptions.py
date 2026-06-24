@@ -1,10 +1,20 @@
 from abc import ABC
 
 class LLMError(Exception, ABC):
+    """The main error that happens when talking to an AI provider fails.
+
+    This acts as the base container for all specific issues that might 
+    come up while sending requests or receiving answers from an AI engine.
+    """
     __module__ = "graphcrawl_ai"
     pass
 
 class LLMAuthenticationError(LLMError):
+    """The AI provider did not recognize your login details.
+
+    This error happens when your API key is missing, typed wrong, or expired, 
+    blocking access to the AI service.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -15,6 +25,11 @@ class LLMAuthenticationError(LLMError):
         super().__init__(message)
 
 class LLMTimeoutError(LLMError):
+    """The AI provider took too long to answer.
+
+    This error happens when the connection times out because the AI engine 
+    is taking longer than the maximum allowed time to complete your request.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -24,6 +39,11 @@ class LLMTimeoutError(LLMError):
         super().__init__(message)
 
 class LLMRetryError(LLMError):
+    """The task failed completely after trying multiple times.
+
+    This error happens when the system tries to fix a temporary problem by 
+    repeating the request, but still fails after all retry attempts are exhausted.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -35,6 +55,11 @@ class LLMRetryError(LLMError):
         super().__init__(message)
 
 class LLMRateLimitError(LLMError):
+    """You have sent too many requests to the AI provider too quickly.
+
+    This error happens when you exceed the allowed speed limit set by the AI 
+    company, meaning you need to slow down and wait a bit before sending more data.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -45,6 +70,11 @@ class LLMRateLimitError(LLMError):
         super().__init__(message)
 
 class LLMContextWindowExceededError(LLMError):
+    """The website text is too large for the AI to read at once.
+
+    This error happens when the amount of text sent to the AI exceeds its maximum 
+    memory storage limit for a single conversation snippet.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -54,6 +84,11 @@ class LLMContextWindowExceededError(LLMError):
         super().__init__(message)
 
 class LLMUnavailabeError(LLMError):
+    """The AI provider's service is temporarily down.
+
+    This error happens when the AI company's servers are experiencing a temporary 
+    outage, maintenance downtime, or are overloaded with other users.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -64,6 +99,11 @@ class LLMUnavailabeError(LLMError):
         super().__init__(message)
 
 class APIError(LLMError):
+    """A general connection system issue happened on the provider's side.
+
+    This error happens when the AI system returns a generic communication error 
+    that doesn't fall into standard categories like rate limits or timeouts.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:
@@ -74,6 +114,11 @@ class APIError(LLMError):
         super().__init__(message)
 
 class LLMUnknownError(LLMError):
+    """An unexpected error occurred that could not be recognized.
+
+    This is a safety-net error that catches unexplained, rare problems 
+    during the AI extraction phase.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:

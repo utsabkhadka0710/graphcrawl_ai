@@ -14,6 +14,9 @@ class QuickOption(str, Enum):
 AvailableQuickOption = Literal["summary","contacts","products","auto"]
 
 class ConfigLLM(BaseModel):
+    """
+    Under work, this is a placeholder for a config dict that is used to controll the LLM
+    """
     model: str
     api: str
     response_model: type[BaseModel]
@@ -24,17 +27,19 @@ class UrlExtractionRequest(BaseModel):
     The setup information sent by a user to start reading a website.
 
     This model holds the website link, what information to look for, 
-    and settings for how long to try reading the page before giving up.
+    which AI provider to use, and settings for timing and retry preferences.
 
     Attributes:
         source: The link to the website you want to read.
         prompt: Your own written instructions on what to extract.
         quick_option: A ready-made choice for quick information gathering.
+        model: The specific name of the AI model to run.
+        api_key: The secret password or key needed to access the AI provider.
+        response_schema: A custom format provided by the user to organize the final output.
         llm_timeout: How many seconds to wait for the AI to answer.
         llm_retry: How many times to try asking the AI again if it fails.
         crawl_timeout: How many seconds to wait for the webpage to load.
         crawl_retry: How many times to try loading the webpage again if it fails.
-        response_schema: A custom format provided by the user to organize the final output.
     """
 
     __module__ = "graphcrawl_ai"
