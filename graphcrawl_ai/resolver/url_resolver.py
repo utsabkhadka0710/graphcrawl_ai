@@ -13,25 +13,19 @@ from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
 )
 
 def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
-    """Download website text and match it with the correct AI instructions and template.
+    """Download website text and bundle it with the correct AI instructions and settings.
 
-    This function handles the heavy lifting of loading the webpage, cleaning up 
-    the text, and choosing the right instructions and data layout template. It uses 
-    either the ready-made settings chosen by the user or switches to a custom setup 
-    if the user provided their own template layout.
+    This function coordinates preparing a web-reading task for the AI. It downloads 
+    the webpage content, extracts the useful text, and determines the correct target 
+    instructions and structural template to use based on user options or a custom format.
 
     Args:
-        request: The initial settings from the user, including the website link 
-            and options for what information to find.
+        request: The initial settings from the user, including the website link, 
+            the chosen AI model, and data extraction instructions.
 
     Returns:
-        A pair containing two items:
-        1. The prepared request object ready for the AI engine.
-        2. The data layout template class used to check the final answer.
-
-    Note:
-        This function will stop and raise a ValueError if you forget to provide 
-        either a custom prompt or a ready-made quick option.
+        The fully prepared data package containing the webpage text, chosen model, 
+        and validation template, ready to be sent directly to the AI engine.
     """
     
     source = request.source

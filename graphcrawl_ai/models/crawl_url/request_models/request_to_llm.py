@@ -13,6 +13,8 @@ class ExtractionJobToLLM(BaseModel):
     Attributes:
         content: The cleaned and parsed text content extracted from the URL.
         prompt: The final instructions telling the AI what to look for.
+        model: The specific name of the AI model to run.
+        api_key: The secret password or key needed to access the AI provider.
         response_schema: The template model used to shape and format the AI's answer.
         llm_timeout: How many seconds to wait for the AI to answer.
         llm_retry: How many times to try asking the AI again if it fails.
