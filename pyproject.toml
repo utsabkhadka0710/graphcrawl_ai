@@ -22,5 +22,8 @@ dependencies = [
     "lxml",
 ]
 
+[pyproject.optional-dependencies]
+dev = ["pytest", "pytest-mock"]
+
 [tool.setuptools]
 packages = ["graphcrawl_ai"]
