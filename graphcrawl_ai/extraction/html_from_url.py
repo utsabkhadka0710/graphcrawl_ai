@@ -64,7 +64,7 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
         
         except httpx.TimeoutException as e:
             logging.warning(f"Attempt {attempt}/{crawl_retry} failed due to time out.")
-            if attempt==crawl_retry-1:
+            if attempt==crawl_retry:
                 logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
-                raise RetryTimeoutError(url=url, attempt=attempt+1, max_retry=crawl_retry)
+                raise RetryTimeoutError(url=url, attempt=attempt, max_retry=crawl_retry)
             logging.info("Retrying...")
