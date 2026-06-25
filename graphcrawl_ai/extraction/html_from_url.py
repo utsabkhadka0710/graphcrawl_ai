@@ -52,9 +52,14 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
         
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
-            if 500 <= status_code < 600 and attempt<crawl_retry:
-                logging.warning(f"Server error{status_code}. Retrying...")
-            raise HTTPStatusError(status_code=status_code, url=url)
+            if 500 <= status_code < 600:
+                if attempt==crawl_retry:
+                    logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
+                    raise HTTPStatusError(status_code=status_code, url=url)
+                logging.info(f"Recieved {status_code} form {url}! Retrying...")
+            else:
+                raise HTTPStatusError(status_code=status_code, url=url)
+                
         
         except httpx.UnsupportedProtocol:
              raise ProtocolError(url=url)
