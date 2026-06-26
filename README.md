@@ -148,7 +148,7 @@ crawl_url(
 ```
 
 - `source` and `model` are required. `model` is the `litellm`-style provider/model string (e.g. `"gemini/gemini-2.5-flash"`, `"openai/gpt-4o"`).
-- You must provide either `prompt` or `quick_option` — not neither (raises `PromptMissingError`). If you provide both, `prompt` wins for instructions, but if `quick_option` is also set, its associated response schema is still used unless you also pass `response_schema` explicitly.
+- You must provide either `prompt` or `quick_option` — not neither (raises `PromptMissingError`). If you provide both, `prompt` wins for instructions, there's a default schema set for the `prompt` but it is suggested to use custom scema for custom `prompt`.
 - `api_key` is optional — omit it to let `litellm` resolve credentials from the environment instead (see [Configuration](#configuration)).
 
 ### Choosing a model
