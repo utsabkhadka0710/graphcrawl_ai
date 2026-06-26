@@ -55,7 +55,7 @@ def test_fetch_html_non_retriable_client_errors(status_code):
            "status-code-505-HTTP Version Not Supported",
         ]
 )
-class TestFetchHtmlRetrtiableServerErrors:
+class TestFetchHtmlRetriableServerErrors:
     def test_fails_all_three_retries(self, status_code, respx_mock):
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[httpx.Response(status_code)]*3
