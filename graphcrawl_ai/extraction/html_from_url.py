@@ -47,7 +47,7 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
 
             return raw_html_data
         
-        except httpx.InvalidURL:
+        except (httpx.InvalidURL, UnicodeEncodeError):
             raise InvalidUrl(url=url)
         
         except httpx.HTTPStatusError as e:
@@ -56,7 +56,7 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
                 if attempt==crawl_retry:
                     logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
                     raise HTTPStatusError(status_code=status_code, url=url)
-                logging.info(f"Recieved {status_code} form {url}! Retrying...")
+                logging.info(f"Recieved {status_code} from {url}! Retrying...")
             else:
                 raise HTTPStatusError(status_code=status_code, url=url)
                 

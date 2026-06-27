@@ -31,7 +31,7 @@ class HTTPStatusError(FetchError):
     (like a 404 page not found or a 500 server error), meaning we couldn't 
     get the content.
     """
-    __module__ = "graphcrawl_ai.fetch_html"
+    __module__ = "graphcrawl_ai"
     def __init__(self, status_code:int, url:str, message:any=None):
         if message is None:
             message = (
@@ -45,7 +45,7 @@ class ProtocolError(FetchError):
     This error happens when a link does not start with 'http://' or 'https://', 
     which the system needs to know how to connect to the site.
     """
-    __module__ = "graphcrawl_ai_fetch_html"
+    __module__ = "graphcrawl_ai"
     def __init__(self, url:str, message:any=None):
         if message is None:
             message = (
@@ -59,7 +59,7 @@ class NetworkError(FetchError):
     This error happens when there is a physical connection issue, DNS failure, 
     or any other low-level network interruption blocking the request.
     """
-    __module__ = "graphcrawl_ai.fetch_html"
+    __module__ = "graphcrawl_ai"
     def __init__(self, err_msg:str, message:any=None):
         if message is None:
             message = (
@@ -73,10 +73,10 @@ class RetryTimeoutError(FetchError):
     This error happens when the website takes too long to respond, and the 
     system has already tried loading it the maximum allowed number of times.
     """
-    __module__ = "graphcrawl_ai.fetch_html"
+    __module__ = "graphcrawl_ai"
     def __init__(self, url:str, attempt:int, max_retry:int, message:any=None):
         if message is None:
             message =(
-                f"Timeout! retried maximum times '{attempt}/{max_retry}'couldn't fetch HTML for given URL '{url}' try again later."
+                f"Timeout! retried maximum times '{attempt}/{max_retry}', couldn't fetch HTML for given URL '{url}' try again later."
             )
         super().__init__(message)

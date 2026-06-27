@@ -62,7 +62,7 @@ def crawl_url(source: str = None,
     if (prompt is None or str(prompt).strip() == "" ) and (quick_option is None or str(quick_option).strip() == ""):
             raise PromptMissingError
     
-    if prompt and not issubclass(response_schema,BaseModel):
+    if prompt and not (isinstance(response_schema, type) or issubclass(response_schema,BaseModel)):
          raise ResponseSchemaMissingError
     
     

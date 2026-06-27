@@ -83,7 +83,7 @@ class LLMContextWindowExceededError(LLMError):
             )
         super().__init__(message)
 
-class LLMUnavailabeError(LLMError):
+class LLMUnavailableError(LLMError):
     """The AI provider's service is temporarily down.
 
     This error happens when the AI company's servers are experiencing a temporary 
@@ -93,7 +93,7 @@ class LLMUnavailabeError(LLMError):
     def __init__(self, message:any = None):
         if message is None:
             message = (
-                "LLM Unavailable! The provider service is currently unavailabe. "
+                "LLM Unavailable! The provider service is currently unavailable. "
                 "Please try again later."
             )
         super().__init__(message)
@@ -108,7 +108,7 @@ class APIError(LLMError):
     def __init__(self, message:any = None):
         if message is None:
             message = (
-                "An unexpected API Error occured. "
+                "An unexpected API Error occurred. "
                 "Please check your API-key or contact your provider."
             )
         super().__init__(message)
@@ -123,6 +123,6 @@ class LLMUnknownError(LLMError):
     def __init__(self, message:any = None):
         if message is None:
             message = (
-                "An unexpected error occured during LLM extraction!"
+                "An unexpected error occurred during LLM extraction!"
             )
         super().__init__(message)
