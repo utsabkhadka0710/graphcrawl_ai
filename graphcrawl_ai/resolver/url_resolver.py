@@ -8,8 +8,7 @@ from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
     UrlPromptResponse,
     UrlSummaryResponse,
     UrlContactsResponse,
-    UrlProductsResponse,
-    UrlAutoResponse
+    UrlProductsResponse
 )
 
 def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
@@ -52,10 +51,6 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
             case QuickOption.PRODUCTS:
                 prompt = prompts.products
                 response_schema = UrlProductsResponse
-
-            case QuickOption.AUTO:
-                prompt = prompts.auto
-                response_schema = UrlAutoResponse
 
     raw_html = fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
     clean_content = extract_content_from_html(html_content=raw_html).content
