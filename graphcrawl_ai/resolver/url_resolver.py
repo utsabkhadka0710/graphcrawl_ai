@@ -54,6 +54,7 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     raw_html = fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
     clean_content = extract_content_from_html(html_content=raw_html).content
     
+    # Fallback to user-defined schema explicitly if provided
     if request.response_schema is not None:
         response_schema = request.response_schema
 

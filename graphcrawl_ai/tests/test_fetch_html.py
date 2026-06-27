@@ -20,6 +20,7 @@ valid_base_url = "https://example-url.site/"
     ids = ["status-code-200-OK", "status-code-203-Non-Authoritative Information", "status-code-206-Partial Content"]
 )
 def test_fetch_html_return_html(status_code):
+    """Confirm that the function returns raw HTML when the server answers with a successful status code."""
     my_route = respx.get(url=valid_base_url).mock(
         return_value=httpx.Response(status_code=status_code, text="<p>Mock success HTML.</p>")
     )  
@@ -37,6 +38,7 @@ def test_fetch_html_return_html(status_code):
            "status-code-404-Not Found", "status-code-408-Request Timeout", "status-code-429- Too Many Requests"]
 )
 def test_fetch_html_non_retriable_client_errors(status_code):
+    """Confirm that standard client errors (4xx codes) fail immediately without triggering retries."""
     my_route = respx.get(url=valid_base_url).mock(return_value=httpx.Response(status_code=status_code))
     with pytest.raises(HTTPStatusError):
         fetch_html(url=valid_base_url)
@@ -56,7 +58,9 @@ def test_fetch_html_non_retriable_client_errors(status_code):
         ]
 )
 class TestFetchHtmlRetriableServerErrors:
+    """Verify how the system handles temporary 5xx server issues using retries."""
     def test_fails_all_three_retries(self, status_code, respx_mock):
+        """Confirm that if the server remains broken through all attempts, a status error is raised."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[httpx.Response(status_code)]*3
         )
@@ -64,6 +68,7 @@ class TestFetchHtmlRetriableServerErrors:
             fetch_html(url=valid_base_url, crawl_retry=3)
         assert my_route.call_count == 3
     def test_fails_twice_succeeds_last_retry(self, status_code, respx_mock):
+        """Confirm that recovery is successful if the server goes back up on the final retry attempt."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[
                 httpx.Response(status_code), httpx.Response(status_code),
@@ -74,6 +79,7 @@ class TestFetchHtmlRetriableServerErrors:
         assert response == "<p>Mock retry success on third attempt HTML.</p>"
         assert my_route.call_count == 3
     def test_fails_once_succeeds_on_second_attempt(self, status_code, respx_mock):
+        """Confirm that recovery is successful if the server stops throwing errors on the second try."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[
                 httpx.Response(status_code),
@@ -106,6 +112,7 @@ class TestFetchHtmlRetriableServerErrors:
            "missing-schema-and-host"]
 )
 def test_fetch_html_protocol_error(malformed_or_protocol_missing_url):
+    """Confirm that URLs missing standard 'http://' or 'https://' components trigger a ProtocolError."""
     with pytest.raises(ProtocolError):
         fetch_html(url=malformed_or_protocol_missing_url)
 
@@ -124,11 +131,13 @@ def test_fetch_html_protocol_error(malformed_or_protocol_missing_url):
            "unencoded-emoji-in-url", "invalid-character-in-url"]
 )
 def test_fetch_html_malformed_or_invalid_url(malformed_or_invalid_url):
+    """Confirm that totally broken, typo-ridden, or illegal URLs correctly trigger an InvalidUrl error."""
     with pytest.raises(InvalidUrl):
         fetch_html(url=malformed_or_invalid_url)
 
 @respx.mock
 def test_fetch_html_network_error():
+    """Confirm that infrastructure or physical connectivity errors get converted to an internal NetworkError."""
     my_route = respx.get(url=valid_base_url).mock(side_effect=httpx.NetworkError(message="Mock NetworkError"))
     with pytest.raises(NetworkError):
         fetch_html(url=valid_base_url)
@@ -136,7 +145,9 @@ def test_fetch_html_network_error():
     assert my_route.call_count == 1
 
 class TestFetchHtmlTimeout:
+    """Verify how the system reacts when request connections slow down and hit timeouts."""
     def test_timeouts_all_three_retries(self, respx_mock):
+        """Confirm that if the network times out continuously, a RetryTimeoutError is thrown."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[httpx.TimeoutException]*3
         )
@@ -144,6 +155,7 @@ class TestFetchHtmlTimeout:
             fetch_html(url=valid_base_url, crawl_timeout=5)
         assert my_route.call_count == 3
     def test_timeouts_twice_succeeds_on_last_attempt(self, respx_mock):
+        """Confirm that if the network speeds up right after one timeout, it successfully finishes on the second try."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[
                 httpx.TimeoutException, httpx.TimeoutException,
@@ -154,6 +166,7 @@ class TestFetchHtmlTimeout:
         assert response == "<p>Mock timeout retry success on third attempt HTML.</p>"
         assert my_route.call_count == 3
     def test_timeouts_once_succeeds_on_second_attempt(self, respx_mock):
+        """Confirm that if the network speeds up right after one timeout, it successfully finishes on the second try."""
         my_route = respx_mock.get(url=valid_base_url).mock(
             side_effect=[
                 httpx.TimeoutException,

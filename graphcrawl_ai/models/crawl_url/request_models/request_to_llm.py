@@ -34,7 +34,7 @@ class ExtractionJobToLLM(BaseModel):
         ...,
         description="LLM model used for extraction"
     )
-    api_key: Optional[str] | None = Field(
+    api_key: Optional[str] = Field(
         None,
         description="api key of the model"
     )

@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from graphcrawl_ai.llm.client import CLIENT
-from graphcrawl_ai.llm.config import build_kwargs
+from graphcrawl_ai.llm.client import Client
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
 from instructor.core import (
     InstructorError,
@@ -28,7 +27,7 @@ def _map_exceptions(exception: InstructorError):
         exception: The raw error thrown by the underlying Instructor or LiteLLM library.
 
     Returns:
-        The matched custom exception class that fits the specific failure reason.
+        The matched custom exception class type that fits the specific failure reason.
     """
     cause = exception.__cause__
 
@@ -50,7 +49,7 @@ def _map_exceptions(exception: InstructorError):
     return LLMUnknownError
 
 
-def llm_extract(request:type[ExtractionJobToLLM]) -> type[BaseModel]:
+def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
     """Send instructions and webpage content to the chosen AI provider to extract clean data.
 
     This function sets up a universal client capable of talking to various AI providers. 
@@ -77,7 +76,7 @@ def llm_extract(request:type[ExtractionJobToLLM]) -> type[BaseModel]:
     api_key = request.api_key
     response_schema = request.response_schema
 
-    client = CLIENT()
+    client = Client()
 
     try:
         response = client.sync_client().create(
@@ -93,6 +92,6 @@ def llm_extract(request:type[ExtractionJobToLLM]) -> type[BaseModel]:
             ],
         )
     except InstructorError as e:
-        raise _map_exceptions(exception=e)
+        raise _map_exceptions(exception=e)()
 
     return response

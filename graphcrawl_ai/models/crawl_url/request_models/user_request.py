@@ -13,8 +13,10 @@ class QuickOption(str, Enum):
 AvailableQuickOption = Literal["summary","contacts","products"]
 
 class ConfigLLM(BaseModel):
-    """
-    Under work, this is a placeholder for a config dict that is used to controll the LLM
+    """A placeholder configuration template for controlling the AI model.
+
+    This model is currently under development and will be used to manage internal 
+    AI routing properties like names, API targets, and schema layouts.
     """
     model: str
     api: str
@@ -59,7 +61,7 @@ class UrlExtractionRequest(BaseModel):
         ...,
         description="LLM model used for extraction"
     )
-    api_key: Optional[str] | None = Field(
+    api_key: Optional[str] = Field(
         None,
         description="api key of the model"
     )

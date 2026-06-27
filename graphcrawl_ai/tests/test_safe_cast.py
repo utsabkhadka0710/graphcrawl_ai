@@ -17,6 +17,7 @@ from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import InvalidDataErr
            "valid-numeric-string", "valid-float-as-string","None-pass-through"]
 )
 def test_safe_cast_success_cases(value, expected):
+    """Verify that valid numbers, float decimals, and numeric strings are converted cleanly into integers."""
     assert safe_cast(value=value, param_name="foo") == expected
 
 @pytest.mark.parametrize(
@@ -42,6 +43,7 @@ def test_safe_cast_success_cases(value, expected):
            "malformed_decimal_consecutive-dot", "malformed_decimal_trailing-dot",
            "malformed_decimal_spaces", "list", "dict", "tuple",'set']
 )
-def test_safe_cast_falilure_cases(value):
+def test_safe_cast_failure_cases(value):
+    """Verify that un-castable data structures, text words, and broken decimal strings trigger an InvalidDataError."""
     with pytest.raises(InvalidDataError):
         safe_cast(value=value, param_name="foo")
