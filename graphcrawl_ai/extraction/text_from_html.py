@@ -3,21 +3,22 @@ from bs4 import BeautifulSoup
 from graphcrawl_ai.models.crawl_url.response_models.parser_response import HtmlParsedContent
 
 def extract_content_from_html(html_content: str) -> HtmlParsedContent:
-    """Parse and sanitize raw HTML into structured text.
+    """Strip out layout mess and turn raw HTML into clean, readable text.
 
-    This function removes non-content elements (such as navigation, scripts, 
-    and metadata) from the provided HTML and normalizes the remaining whitespace.
+    This function removes background noise elements (such as navigation menus, 
+    scripts, and page styles) from the webpage code and trims down messy spacing 
+    to leave behind only the actual written text.
 
     Args:
-        html_content: The raw HTML string retrieved from a web source.
+        html_content: The raw HTML text code downloaded from a website.
 
     Returns:
-        An HtmlParsedContent object containing the page title and the 
-        sanitized text body.
+        An HtmlParsedContent object containing the clean page title and 
+        the final stripped-down text content.
 
     Note:
-        The parser utilizes 'lxml' for high-performance parsing and applies 
-        a whitelist-based removal strategy for noise tags.
+        The parser uses 'lxml' for high-speed processing and applies an 
+        automatic cleanup list to eliminate background webpage clutter.
     """
     
     noise_tags = [

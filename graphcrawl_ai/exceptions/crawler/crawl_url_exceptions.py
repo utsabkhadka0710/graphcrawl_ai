@@ -42,6 +42,11 @@ class PromptMissingError(CrawlError):
         super().__init__(message)
 
 class ResponseSchemaMissingError(CrawlError):
+    """The formatting layout template for your custom prompt is missing or wrong.
+
+    This error happens when you provide your own custom extraction prompt but 
+    forget to include a valid Pydantic template model to guide the layout of the AI's response.
+    """
     __module__ = "graphcrawl_ai"
     def __init__(self, message:any = None):
         if message is None:

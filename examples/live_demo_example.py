@@ -12,7 +12,7 @@ prompt = "Extract a detail imformation about this user with thh cotacts if any"
 # Available quick options: "summary", "contacts", "products", "auto" try it and experiment yourself
 response = crawl_url(
     source=url,
-    quick_option='products',
+    prompt=prompt,
     model="gemini/gemini-2.5-flash"
     )
 
