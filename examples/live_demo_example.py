@@ -1,19 +1,27 @@
 from graphcrawl_ai import crawl_url
 from dotenv import load_dotenv
-
+from pydantic import BaseModel
+from typing import Optional
 load_dotenv()
 
-url = "https://www.amazon.com/s?k=gaming+headphone"
-prompt = "Extract a detail imformation about this user with thh cotacts if any"
+url = "https://github.com/utsabkhadka0710/"
+prompt = "Extract a detail imformation about the user"
 
-# For testing I'd suggest  you to just go with quick option available
+class UserInfo(BaseModel):
+    name: str
+    age: Optional[int]
+    contact_info: list[str]
+    summary: str
+    
+class Schema(BaseModel):
+    info: UserInfo
 
-# Here I'm testing with quick otion "auto" which LLM decides itself what's best to crawl
-# Available quick options: "summary", "contacts", "products", "auto" try it and experiment yourself
+
 response = crawl_url(
     source=url,
     prompt=prompt,
-    model="gemini/gemini-2.5-flash"
+    response_schema=Schema,
+    model="gemini/gemini-3.1-flash-lite"
     )
 
 print(response)

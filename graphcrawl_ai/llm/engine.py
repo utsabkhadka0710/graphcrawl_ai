@@ -10,7 +10,7 @@ from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import(
     LLMRetryError,
     LLMTimeoutError,
     LLMRateLimitError,
-    LLMUnavailabeError,
+    LLMUnavailableError,
     LLMContextWindowExceededError,
     APIError,
     LLMUnknownError
@@ -43,7 +43,7 @@ def _map_exceptions(exception: InstructorError):
     if isinstance(exception, InstructorRetryException):
         return LLMRetryError
     if isinstance(cause, litellm.ServiceUnavailableError):
-        return LLMUnavailabeError
+        return LLMUnavailableError
     if isinstance(cause, (litellm.APIConnectionError, litellm.APIError)):
         return APIError
     return LLMUnknownError
