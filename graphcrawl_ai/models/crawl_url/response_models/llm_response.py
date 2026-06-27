@@ -148,22 +148,3 @@ class UrlProductsResponse(UrlBaseResponse):
         ..., 
         description="A list containing the details of each item found."
     )
-
-
-class UrlAutoResponse(UrlBaseResponse):
-    """
-    The answer created when the AI organizes the text on its own.
-
-    This model is used when you let the AI automatically decide how to 
-    group and list the information it finds.
-
-    Attributes:
-        llm_auto_response: A list of text pieces automatically separated and grouped by the AI.
-    """
-
-    __module__ = "graphcrawl_ai"
-
-    llm_auto_response: list[str] = Field(
-        ..., 
-        description="A list of text pieces automatically separated and grouped by the AI."
-    )
