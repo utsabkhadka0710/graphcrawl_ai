@@ -41,6 +41,16 @@ class PromptMissingError(CrawlError):
             )
         super().__init__(message)
 
+class ResponseSchemaMissingError(CrawlError):
+    __module__ = "graphcrawl_ai"
+    def __init__(self, message:any = None):
+        if message is None:
+            message = (
+                f"The 'response_schema' is missing/empty or invalid schema provided. "
+                f"Expected a Pydantic model/schema, please try again with a valid Pydantic model/schema."
+            )
+        super().__init__(message)
+
 class InvalidDataError(CrawlError):
     """
     Raised when a parameter contains an unsupported data type or value 

@@ -9,9 +9,8 @@ class QuickOption(str, Enum):
     SUMMARY = "summary"
     CONTACTS = "contacts"
     PRODUCTS = "products"
-    AUTO = "auto"
 
-AvailableQuickOption = Literal["summary","contacts","products","auto"]
+AvailableQuickOption = Literal["summary","contacts","products"]
 
 class ConfigLLM(BaseModel):
     """

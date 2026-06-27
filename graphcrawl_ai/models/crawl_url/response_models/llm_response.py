@@ -21,25 +21,6 @@ class UrlBaseResponse(BaseModel, ABC):
     )
 
 
-class UrlPromptResponse(UrlBaseResponse):
-    """
-    The answer generated from your own custom instructions.
-
-    This model holds a list of text details found on the website 
-    based on the specific questions you asked.
-
-    Attributes:
-        response: A list of text answers found based on your instructions.
-    """
-
-    __module__ = "graphcrawl_ai"
-
-    response: list[str] = Field(
-        ..., 
-        description="A list of text answers found based on your instructions."
-    )
-
-
 class UrlSummaryResponse(UrlBaseResponse):
     """
     A short overview of the website text.
@@ -147,23 +128,4 @@ class UrlProductsResponse(UrlBaseResponse):
     products: list[ProductItem] = Field(
         ..., 
         description="A list containing the details of each item found."
-    )
-
-
-class UrlAutoResponse(UrlBaseResponse):
-    """
-    The answer created when the AI organizes the text on its own.
-
-    This model is used when you let the AI automatically decide how to 
-    group and list the information it finds.
-
-    Attributes:
-        llm_auto_response: A list of text pieces automatically separated and grouped by the AI.
-    """
-
-    __module__ = "graphcrawl_ai"
-
-    llm_auto_response: list[str] = Field(
-        ..., 
-        description="A list of text pieces automatically separated and grouped by the AI."
     )
