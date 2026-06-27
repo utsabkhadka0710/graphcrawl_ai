@@ -5,7 +5,6 @@ from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
 from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, QuickOption
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
 from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
-    UrlPromptResponse,
     UrlSummaryResponse,
     UrlContactsResponse,
     UrlProductsResponse
@@ -31,12 +30,12 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     prompt = request.prompt
     quick_option = request.quick_option
     model = request.model
+    response_schema = request.response_schema
     api_key = request.api_key
     llm_timeout = request.llm_timeout
     llm_retry = request.llm_retry
     crawl_timeout = request.crawl_timeout
     crawl_retry = request.crawl_retry
-    response_schema = UrlPromptResponse
 
     if quick_option and not prompt:
         match quick_option:

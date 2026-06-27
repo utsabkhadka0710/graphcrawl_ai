@@ -8,7 +8,8 @@ from pydantic import BaseModel, ValidationError
 from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
     UrlMissingError,
     PromptMissingError,
-    InvalidDataError
+    InvalidDataError,
+    ResponseSchemaMissingError
 )
 
 
@@ -26,32 +27,31 @@ def crawl_url(source: str = None,
               crawl_retry: Optional[float] = 3
             ) -> CrawlUrlResponse:
     """
-    Read a webpage and pull out specific information using an AI model.
+    Scrapes a webpage and extracts structured data using an AI model.
 
-    This function coordinates the whole process: it double-checks your inputs, 
-    downloads the website text, selects the right instructions, and asks the AI 
-    engine to format everything into your final organized answer.
+    This function handles the end-to-end process: validating user input, 
+    preparing the request, and querying the Gemini AI to extract information 
+    based on the provided prompt or quick option.
 
     Args:
-        source: The link to the website you want to read.
-        prompt: Your own written instructions on what to look for.
-        quick_option: A ready-made choice like summary, contacts, products, or auto.
-        model: The specific name of the AI model to run.
-        api_key: The secret password or key needed to access the AI provider.
-        response_schema: A custom format model if you want the output in a specific layout.
-        llm_timeout: How many seconds to wait for the AI to answer.
-        llm_retry: How many times to try asking the AI again if it fails.
-        crawl_timeout: How many seconds to wait for the webpage to load.
-        crawl_retry: How many times to try loading the webpage again if it fails.
+        source (str): The URL of the website to scrape.
+        prompt (str, optional): Custom instructions for the AI on what to extract.
+        quick_option (AvailableQuickOption, optional): A predefined extraction mode 
+            (e.g., 'summary', 'contacts').
+        llm_timeout (float, optional): Maximum time (seconds) to wait for AI response.
+        llm_retry (float, optional): Number of times to retry the AI request on failure.
+        crawl_timeout (float, optional): Maximum time (seconds) to wait for page load.
+        crawl_retry (float, optional): Number of times to retry the page load on failure.
+        response_schema (type[BaseModel], optional): A Pydantic model to enforce the 
+            structure of the AI output.
 
     Returns:
-        An object holding the final organized answers found on the website.
+        CrawlUrlResponse: The extracted data structured according to the provided schema.
 
     Raises:
-        UrlMissingError: If you forget to provide a website link.
-        PromptMissingError: If you forget to provide either a custom prompt 
-            or a quick option selection.
-        InvalidDataError: If any of your setting options or numbers are set incorrectly.
+        UrlMissingError: If the 'source' argument is missing or an empty string.
+        PromptMissingError: If neither a 'prompt' nor a 'quick_option' is provided.
+        InvalidDataError: If any of the provided parameters fail validation checks.
     """
     
     if source is None or str(source).strip() == "":
@@ -59,6 +59,10 @@ def crawl_url(source: str = None,
 
     if (prompt is None or str(prompt).strip() == "" ) and (quick_option is None or str(quick_option).strip() == ""):
             raise PromptMissingError
+    
+    if prompt and not isinstance(response_schema,BaseModel):
+         raise ResponseSchemaMissingError
+    
     
     request_by_user: UrlExtractionRequest = None
     from graphcrawl_ai.utils.safe_cast import safe_cast
