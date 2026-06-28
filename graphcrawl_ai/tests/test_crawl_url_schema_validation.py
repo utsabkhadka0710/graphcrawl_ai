@@ -44,8 +44,8 @@ def test_valid_schema():
         None,
         True
     ],
-    ids = ["string-as-schema", "int-as-schema", "list-as-schema",
-           "tuple-as-schema", "dict-as-schema", "int-as-schema",
+    ids = ["string-as-schema", "int-as-schema", "float-as-schema",
+           "list-as-schema","tuple-as-schema", "dict-as-schema",
            "set-as-schema", "none-as-schema", "bool-as-schema"]
 )
 def test_invalid_schema(schema, respx_mock):
