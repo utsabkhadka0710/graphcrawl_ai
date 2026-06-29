@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [pyproject.optional-dependencies]
-dev = ["pytest", "pytest-mock"]
+dev = ["pytest", "pytest-mock", "respx"]
 
 # [tool.setuptools]
 # packages = ["graphcrawl_ai"]
