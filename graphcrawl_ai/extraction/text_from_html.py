@@ -2,6 +2,12 @@ import lxml
 from bs4 import BeautifulSoup
 
 def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Strip out elements that define page design, scripts, or are hidden from sight.
+
+    This function hunts down tracking pixels, style blocks, interactive canvases, 
+    and elements explicitly marked hidden by screen readers or CSS invisibilities, 
+    shredding them completely from the document.
+    """
     structural_noise_tags = [
         "style", "script", "noscript",
         "iframe", "svg", "canvas", 
@@ -23,6 +29,12 @@ def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
     return soup
 
 def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Identify and delete layout zones that contain mostly navigation links instead of articles.
+
+    This function uses a flexible link-density formula to strip out sidebars, 
+    menus, and footers while safely protecting long text descriptions or sections 
+    rich in paragraph headers.
+    """
     possible_containers = soup.find_all(['div','aside','section','nav','footer','ul'])
     
     for container in reversed(possible_containers):
@@ -60,7 +72,12 @@ def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
 
     
 def extract_content_from_html(html_content: str) -> str:
-    
+    """Convert an entire raw HTML webpage string into isolated, highly relevant body text.
+
+    This coordinator initializes the processor, executes a multi-stage layout 
+    cleanup to drop code structures and hyperlink text maps, gathers the surviving 
+    text strings, and unifies layout spaces.
+    """
     soup = BeautifulSoup(html_content, 'lxml')
     
     clean_structural_noise(soup=soup)
