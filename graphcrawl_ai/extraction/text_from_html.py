@@ -1,46 +1,93 @@
-import re
+import lxml
 from bs4 import BeautifulSoup
-from graphcrawl_ai.models.crawl_url.response_models.parser_response import HtmlParsedContent
 
-def extract_content_from_html(html_content: str) -> HtmlParsedContent:
-    """Strip out layout mess and turn raw HTML into clean, readable text.
+def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Strip out elements that define page design, scripts, or are hidden from sight.
 
-    This function removes background noise elements (such as navigation menus, 
-    scripts, and page styles) from the webpage code and trims down messy spacing 
-    to leave behind only the actual written text.
-
-    Args:
-        html_content: The raw HTML text code downloaded from a website.
-
-    Returns:
-        An HtmlParsedContent object containing the clean page title and 
-        the final stripped-down text content.
-
-    Note:
-        The parser uses 'lxml' for high-speed processing and applies an 
-        automatic cleanup list to eliminate background webpage clutter.
+    This function hunts down tracking pixels, style blocks, interactive canvases, 
+    and elements explicitly marked hidden by screen readers or CSS invisibilities, 
+    shredding them completely from the document.
     """
+    structural_noise_tags = [
+        "style", "script", "noscript",
+        "iframe", "svg", "canvas", 
+    ]
     
-    noise_tags = [
-            "meta", "script", "style", "link",
-            "iframe", "noscript", "nav", "svg",
-            "aside", "header", "footer", ".hidden",
-            "[aria-hidden='true']"
-        ]
-    
-
-    soup = BeautifulSoup(html_content, 'lxml')
-
-    for tag in soup.select(','.join(noise_tags)):
+    for tag in soup.find_all(structural_noise_tags):
+        tag.decompose()
+    for tag in soup.find_all(attrs={'aria-hidden':'true'}):
         tag.decompose()
     
-    title = soup.title.string if soup.title else "Title Not Found"
-    clean_text = soup.get_text(separator=" ", strip=True)
-    normalized_text = re.sub(r"\s+",' ',clean_text)
+    invisible_tags =  soup.find_all(
+        lambda tag: tag.has_attr('style') and (
+            "display:none" in tag['style'].replace(' ','').lower() or 
+            "visibility:hidden" in tag['style'].replace(' ','').lower()
+            )
+        )
+    for tag in invisible_tags:
+        tag.decompose()
+    return soup
 
-    parsed_content = HtmlParsedContent(
-        title = title,
-        content = normalized_text
-    )
+def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Identify and delete layout zones that contain mostly navigation links instead of articles.
 
-    return parsed_content
+    This function uses a flexible link-density formula to strip out sidebars, 
+    menus, and footers while safely protecting long text descriptions or sections 
+    rich in paragraph headers.
+    """
+    possible_containers = soup.find_all(['div','aside','section','nav','footer','ul'])
+    
+    for container in reversed(possible_containers):
+    
+        if not container.parent:
+            continue
+        
+        total_text = container.get_text(strip=True)
+        total_text_len = len(total_text)
+        
+        if total_text_len == 0:
+            container.decompose()
+            continue
+        
+        link_text = "".join([a.get_text(strip=True) for a in container.find_all('a')])
+        link_text_len = len(link_text)
+        
+        link_density = link_text_len/total_text_len
+        
+        if total_text_len > 600 and link_density < 0.75:
+            continue
+        
+        useful_containers = soup.find_all(['p', 'h2', 'h3', 'h4'])
+        if len(useful_containers)>4 and link_density < 0.7:
+            continue
+        
+        if container.name in ["nav", "aside"] and link_density > 0.5:
+            container.decompose()
+            continue
+        
+        if link_density > 0.5 and total_text_len < 500:
+            container.decompose()
+            
+    return soup
+
+    
+def extract_content_from_html(html_content: str) -> str:
+    """Convert an entire raw HTML webpage string into isolated, highly relevant body text.
+
+    This coordinator initializes the processor, executes a multi-stage layout 
+    cleanup to drop code structures and hyperlink text maps, gathers the surviving 
+    text strings, and unifies layout spaces.
+    """
+    soup = BeautifulSoup(html_content, 'lxml')
+    
+    clean_structural_noise(soup=soup)
+    clean_semantic_noise(soup=soup)
+    
+    text = soup.get_text(separator=" ", strip=True)
+    
+    from re import sub
+    clean_text = sub(r"\s+"," ",text)
+    
+    return clean_text
+
+    
