@@ -42,10 +42,22 @@ def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
         
         link_density = link_text_len/total_text_len
         
-        if link_density > 0.5:
+        if total_text_len > 600 and link_density < 0.75:
+            continue
+        
+        useful_containers = soup.find_all(['p', 'h2', 'h3', 'h4'])
+        if len(useful_containers)>4 and link_density < 0.7:
+            continue
+        
+        if container.name in ["nav", "aside"] and link_density > 0.5:
+            container.decompose()
+            continue
+        
+        if link_density > 0.5 and total_text_len < 500:
             container.decompose()
             
     return soup
+
     
 def extract_content_from_html(html_content: str) -> str:
     
