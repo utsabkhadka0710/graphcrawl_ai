@@ -11,7 +11,7 @@ def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
     """
     structural_noise_tags = [
         "style", "script", "noscript",
-        "iframe", "svg", "canvas", 
+        "iframe", "svg", "canvas", "dialog"
     ]
     
     for tag in soup.find_all(structural_noise_tags):
@@ -29,12 +29,41 @@ def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
         tag.decompose()
     return soup
 
-def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
-    """Identify and delete layout zones that contain mostly navigation links instead of articles.
+def clean_overlay_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Target and remove non-content popups like cookie consent forms and marketing banners.
 
-    This function uses a flexible link-density formula to strip out sidebars, 
-    menus, and footers while safely protecting long text descriptions or sections 
-    rich in paragraph headers.
+    This function isolates elements based on accessibility dialog roles or common 
+    naming keywords (like 'modal', 'gdpr', or 'subscribe') embedded inside tag IDs 
+    and class names, shredding promotional and legal hurdles before text extraction.
+    """
+    overlay_aria_roles = [
+        "dialog", "alertdialog", "banner",
+        "navigation", "button", "alert"
+    ]
+    overlay_keywords = re.compile(
+        r'(cookie|consent|privacy-policy|gdpr|modal|popup|overlay|'
+        r'newsletter|subscribe|signup-form|promo|discount-wrapper|newsletter-box)',
+        re.IGNORECASE
+    )
+    
+    for role in overlay_aria_roles:
+        for tag in soup.find_all(attrs={"role": role}):
+            tag.decompose()
+    
+    for container in soup.find_all(["div", "aside", "section"]):
+        container_id = container.get('id','')
+        container_class = "".join(container.get('class',[])) if container.get('class') else ""
+        
+        if (overlay_keywords.search(container_id)) or (overlay_keywords.search(container_class)):
+            container.decompose()
+    
+
+def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
+    """Convert an entire raw HTML webpage string into isolated, highly relevant body text.
+
+    This coordinator initializes the processor, executes a multi-stage layout 
+    cleanup to drop code structures and hyperlink text maps, gathers the surviving 
+    text strings, and unifies layout spaces.
     """
     possible_containers = soup.find_all(['div','aside','section','nav','footer','ul'])
     
@@ -82,12 +111,12 @@ def extract_content_from_html(html_content: str) -> str:
     soup = BeautifulSoup(html_content, 'lxml')
     
     clean_structural_noise(soup=soup)
+    clean_overlay_noise(soup=soup)
     clean_semantic_noise(soup=soup)
     
     text = soup.get_text(separator=" ", strip=True)
     
-    clean_text = re.sub(r"\s+"," ",text)
-    
+    clean_text = re.sub(r"\n+","\n",text)
     return clean_text
 
     
