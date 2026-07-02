@@ -1,3 +1,4 @@
+import re
 import lxml
 from bs4 import BeautifulSoup
 
@@ -85,8 +86,7 @@ def extract_content_from_html(html_content: str) -> str:
     
     text = soup.get_text(separator=" ", strip=True)
     
-    from re import sub
-    clean_text = sub(r"\s+"," ",text)
+    clean_text = re.sub(r"\s+"," ",text)
     
     return clean_text
 
