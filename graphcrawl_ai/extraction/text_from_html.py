@@ -116,7 +116,5 @@ def extract_content_from_html(html_content: str) -> str:
     
     text = soup.get_text(separator=" ", strip=True)
     
-    clean_text = re.sub(r"\s+","\s",text)
+    clean_text = re.sub(r"\s+"," ",text)
     return clean_text
-
-    
