@@ -56,6 +56,8 @@ def clean_overlay_noise(soup: BeautifulSoup)->BeautifulSoup:
         
         if (overlay_keywords.search(container_id)) or (overlay_keywords.search(container_class)):
             container.decompose()
+            
+    return soup
     
 
 def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
