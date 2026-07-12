@@ -47,7 +47,7 @@ def clean_overlay_noise(soup: BeautifulSoup)->BeautifulSoup:
         "navigation", "button", "alert"
     ]
     overlay_keywords = re.compile(
-        r'(cookie|consent|privacy-policy|gdpr|modal|popup|overlay|onetrust|osano'
+        r'(cookie|consent|privacy-policy|gdpr|modal|popup|overlay|onetrust|osano|'
         r'newsletter|subscribe|signup-form|promo|discount-wrapper|newsletter-box)',
         re.IGNORECASE
     )
