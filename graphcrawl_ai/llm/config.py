@@ -1,7 +1,6 @@
 """
 This module is intended for later upgrade
 """
-import os
 from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
