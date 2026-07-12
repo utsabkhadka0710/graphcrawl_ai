@@ -1,5 +1,11 @@
+# Keyword-based overlay detection: catches known consent management vendors
+# (OneTrust, Cookiebot, etc.) by class/id naming patterns.
+# Known limitation: plain-prose cookie notices with no identifying class/id
+# are not caught by this approach. This is acceptable for the current bs4-based
+# MVP. The Playwright migration will handle dismissal at the browser level,
+# making this function obsolete.
+
 import re
-import lxml
 from bs4 import BeautifulSoup
 
 def clean_structural_noise(soup: BeautifulSoup)->BeautifulSoup:
