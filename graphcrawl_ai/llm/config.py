@@ -27,7 +27,7 @@ def resolve_model():
     This placeholder function will analyze user choices, system loads, or environment 
     keys to pick the most optimal model from your available specifications.
     """
-    pass
+    raise NotImplementedError
 
 
 def build_kwargs(llm_config):
@@ -36,4 +36,4 @@ def build_kwargs(llm_config):
     This placeholder function will take a layout configuration object and format it 
     into standard Python dictionary parameters required by your AI client calls.
     """
-    pass
+    raise NotImplementedError
