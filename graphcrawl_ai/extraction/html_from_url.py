@@ -14,7 +14,7 @@ logging.basicConfig(
     format = "%(levelname)s | %(message)s"
 )
 
-def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> str:
+async def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> str:
     """Download the raw HTML content from a given web address.
 
     This function connects to a website, downloads its layout and text, and returns 
@@ -35,41 +35,42 @@ def fetch_html(url: str = "", crawl_timeout: int = 30, crawl_retry: int = 3) -> 
     """
 
     headers = {"User-Agent": "GraphCrawl/0.1.0"}
-    for attempt in range(1, crawl_retry+1):
-        try:
-            logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt}")
+    async with httpx.AsyncClient() as client:   
+        for attempt in range(1, crawl_retry+1):
+            try:
+                logging.info(f"Attempt to fetch HTML from '{url}'. | Attempt = {attempt}")
 
-            response = httpx.get(url=url, timeout=crawl_timeout, headers=headers, follow_redirects=True) 
-            response.raise_for_status()
+                response = await client.get(url=url, timeout=crawl_timeout, headers=headers, follow_redirects=True) 
+                response.raise_for_status()
 
-            raw_html_data = response.text
-            logging.info("HTML/Data Fetched Successfully.")
+                raw_html_data = response.text
+                logging.info("HTML/Data Fetched Successfully.")
 
-            return raw_html_data
-        
-        except (httpx.InvalidURL, UnicodeEncodeError):
-            raise InvalidUrl(url=url)
-        
-        except httpx.HTTPStatusError as e:
-            status_code = e.response.status_code
-            if 500 <= status_code < 600:
+                return raw_html_data
+            
+            except (httpx.InvalidURL, UnicodeEncodeError):
+                raise InvalidUrl(url=url)
+            
+            except httpx.HTTPStatusError as e:
+                status_code = e.response.status_code
+                if 500 <= status_code < 600:
+                    if attempt==crawl_retry:
+                        logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
+                        raise HTTPStatusError(status_code=status_code, url=url)
+                    logging.info(f"Recieved {status_code} from {url}! Retrying...")
+                else:
+                    raise HTTPStatusError(status_code=status_code, url=url)
+                    
+            
+            except httpx.UnsupportedProtocol:
+                raise ProtocolError(url=url)
+            
+            except httpx.NetworkError as e:
+                raise NetworkError(err_msg=e)
+            
+            except httpx.TimeoutException as e:
+                logging.warning(f"Attempt {attempt}/{crawl_retry} failed due to time out.")
                 if attempt==crawl_retry:
                     logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
-                    raise HTTPStatusError(status_code=status_code, url=url)
-                logging.info(f"Recieved {status_code} from {url}! Retrying...")
-            else:
-                raise HTTPStatusError(status_code=status_code, url=url)
-                
-        
-        except httpx.UnsupportedProtocol:
-             raise ProtocolError(url=url)
-        
-        except httpx.NetworkError as e:
-            raise NetworkError(err_msg=e)
-        
-        except httpx.TimeoutException as e:
-            logging.warning(f"Attempt {attempt}/{crawl_retry} failed due to time out.")
-            if attempt==crawl_retry:
-                logging.critical(f"Maximum retry '{attempt}/{crawl_retry}' reached!!!")
-                raise RetryTimeoutError(url=url, attempt=attempt, max_retry=crawl_retry)
-            logging.info("Retrying...")
+                    raise RetryTimeoutError(url=url, attempt=attempt, max_retry=crawl_retry)
+                logging.info("Retrying...")
