@@ -1,4 +1,3 @@
-from pydantic import BaseModel
 from graphcrawl_ai.llm import prompts
 from graphcrawl_ai.extraction.html_from_url import fetch_html
 from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
