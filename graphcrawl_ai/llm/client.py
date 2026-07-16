@@ -9,7 +9,7 @@ class Client:
     or asynchronously.
     """
 
-    def async_client(self):
+    def get_client(self):
         """Set up an asynchronous, background-capable client connection.
 
         Returns:
