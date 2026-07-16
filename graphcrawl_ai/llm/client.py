@@ -9,15 +9,6 @@ class Client:
     or asynchronously.
     """
 
-    def sync_client(self):
-        """Set up a standard synchronous client connection.
-
-        Returns:
-            An instructor-wrapped client that pauses execution to wait for 
-            the AI provider's complete response before moving to the next line.
-        """
-        return instructor.from_litellm(completion)
-
     def async_client(self):
         """Set up an asynchronous, background-capable client connection.
 
