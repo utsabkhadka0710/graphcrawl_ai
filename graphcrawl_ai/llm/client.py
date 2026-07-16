@@ -16,4 +16,4 @@ class Client:
             An instructor-wrapped client that can handle requests in the background 
             without freezing or locking up your application's execution flow.
         """
-        return instructor.from_litellm(acompletion)
+        return instructor.from_litellm(acompletion, async_client=True)
