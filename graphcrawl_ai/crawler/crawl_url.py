@@ -15,7 +15,7 @@ from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
 
 CrawlUrlResponse = TypeVar("ResponseSchema",bound=BaseModel)
 
-def crawl_url(source: str = None,
+async def crawl_url(source: str = None,
               prompt: str = None, 
               quick_option: AvailableQuickOption = None,
               model: str = None,
@@ -86,8 +86,8 @@ def crawl_url(source: str = None,
         failed_param = err_msg[0]["loc"][0]
         raise InvalidDataError(param_name=failed_param)
     
-    request_to_llm = resolve_url_request(request=request_by_user)
+    request_to_llm = await resolve_url_request(request=request_by_user)
     
-    response_from_llm = llm_extract(request=request_to_llm)
+    response_from_llm = await llm_extract(request=request_to_llm)
 
     return response_from_llm

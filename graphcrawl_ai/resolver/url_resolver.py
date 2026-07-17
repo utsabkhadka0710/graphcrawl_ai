@@ -52,7 +52,7 @@ async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToL
                 response_schema = UrlProductsResponse
 
     raw_html = await fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
-    clean_content = extract_content_from_html(html_content=raw_html)
+    clean_content = await extract_content_from_html(html_content=raw_html)
     
     # Fallback to user-defined schema explicitly if provided
     if request.response_schema is not None:

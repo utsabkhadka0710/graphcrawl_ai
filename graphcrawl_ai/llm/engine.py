@@ -79,7 +79,7 @@ async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
     client = Client()
 
     try:
-        response = client.get_client().create(
+        response = await client.get_client().create(
             model=model,
             api_key = api_key,
             response_model=response_schema,
