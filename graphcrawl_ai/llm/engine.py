@@ -49,7 +49,7 @@ def _map_exceptions(exception: InstructorError):
     return LLMUnknownError
 
 
-def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
+async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
     """Send instructions and webpage content to the chosen AI provider to extract clean data.
 
     This function sets up a universal client capable of talking to various AI providers. 
@@ -79,7 +79,7 @@ def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
     client = Client()
 
     try:
-        response = client.sync_client().create(
+        response = await client.get_client().create(
             model=model,
             api_key = api_key,
             response_model=response_schema,

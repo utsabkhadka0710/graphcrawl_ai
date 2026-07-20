@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+import asyncio
 from graphcrawl_ai.llm import prompts
 from graphcrawl_ai.extraction.html_from_url import fetch_html
 from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
@@ -10,7 +10,7 @@ from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
     UrlProductsResponse
 )
 
-def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
+async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     """Download website text and bundle it with the correct AI instructions and settings.
 
     This function coordinates preparing a web-reading task for the AI. It downloads 
@@ -50,9 +50,12 @@ def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
             case QuickOption.PRODUCTS:
                 prompt = prompts.products
                 response_schema = UrlProductsResponse
-
-    raw_html = fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
-    clean_content = extract_content_from_html(html_content=raw_html)
+    
+    print("just reached on resolver at line 54 about to await fetch html")
+    raw_html = await fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
+    print(raw_html)
+    print("this is at line 57 inside resolver just before calling extract content form html")
+    clean_content = await extract_content_from_html(html_content=raw_html)
     
     # Fallback to user-defined schema explicitly if provided
     if request.response_schema is not None:
