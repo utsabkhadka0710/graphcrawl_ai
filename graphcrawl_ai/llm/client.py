@@ -1,5 +1,5 @@
 import instructor
-from litellm import completion, acompletion
+from litellm import acompletion
 
 class Client:
     """A client manager to set up structured AI connections.
