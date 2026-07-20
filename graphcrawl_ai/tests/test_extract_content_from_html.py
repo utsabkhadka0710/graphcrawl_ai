@@ -55,8 +55,7 @@ def test_clean_semantic_noise_keeps_good_long_content():
     
     assert len(text)>600
 
-@pytest.mark.asyncio 
-async def test_extract_content_from_html_integration():
+def test_extract_content_from_html_integration():
     """Run an integration test confirming that structural, overlay, and link-density cleaners run perfectly in sequence."""
     raw_html = """
     <html>
@@ -72,7 +71,7 @@ async def test_extract_content_from_html_integration():
         </body>
     </html>
     """
-    result = await extract_content_from_html(raw_html)
+    result = extract_content_from_html(raw_html)
     
     assert "AI Scraper Breakthrough" in result
     assert "The parser successfully extracted this core sentence." in result
@@ -80,7 +79,6 @@ async def test_extract_content_from_html_integration():
     assert "Ignore this hidden tracker text" not in result
     assert "Home" not in result
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "overlay_snippet, expected_removed_text",
     [
@@ -94,10 +92,11 @@ async def test_extract_content_from_html_integration():
     ids = ["cookie-removed","newsletter-removed","promo-discount-removed",
            "pop-up-removed","dialog-removed","alert-dialog-removed"]
 )
-async def test_overlay_cleanup_success(overlay_snippet, expected_removed_text):
+
+def test_overlay_cleanup_success(overlay_snippet, expected_removed_text):
     """Verify that interstitial popups, marketing promos, and regulatory bars are stripped out."""
     html = f"<html><body>{overlay_snippet}<main><p>Keep this valuable core text.</p></main></body></html>"
-    result = await extract_content_from_html(html)
+    result = extract_content_from_html(html)
     
     assert "Keep this valuable core text." in result
     assert expected_removed_text not in result
