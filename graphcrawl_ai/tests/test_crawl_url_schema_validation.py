@@ -1,6 +1,6 @@
 import pytest
 import httpx, respx
-
+import asyncio
 from graphcrawl_ai import crawl_url
 from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import ResponseSchemaMissingError
 
@@ -11,7 +11,8 @@ class Schema(BaseModel):
     summary: str
 
 @respx.mock
-def test_valid_schema():
+@pytest.mark.asyncio
+async def test_valid_schema():
     respx.get(url="https://graphcrawl.ai").mock(
         return_value=httpx.Response(
             status_code=200,
@@ -19,7 +20,7 @@ def test_valid_schema():
             )
     )
     try:
-        crawl_url(
+        await crawl_url(
             source="https://graphcrawl.ai",
             prompt="Extract summary form this page",
             model="provider/model",
@@ -31,6 +32,7 @@ def test_valid_schema():
     except Exception:
         pass
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "schema",
     [
@@ -48,7 +50,7 @@ def test_valid_schema():
            "list-as-schema","tuple-as-schema", "dict-as-schema",
            "set-as-schema", "none-as-schema", "bool-as-schema"]
 )
-def test_invalid_schema(schema, respx_mock):
+async def test_invalid_schema(schema, respx_mock):
     respx_mock.get(url="https://graphcrawl.ai").mock(
         return_value=httpx.Response(
             status_code=200,
@@ -56,7 +58,7 @@ def test_invalid_schema(schema, respx_mock):
         )
     )
     try:
-        crawl_url(
+        await crawl_url(
             source="https://graphcrawl.ai",
             prompt="Extract summary form this page",
             model="provider/model",
