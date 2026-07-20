@@ -55,7 +55,7 @@ async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToL
     raw_html = await fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
     print(raw_html)
     print("this is at line 57 inside resolver just before calling extract content form html")
-    clean_content = await extract_content_from_html(html_content=raw_html)
+    clean_content = extract_content_from_html(html_content=raw_html)
     
     # Fallback to user-defined schema explicitly if provided
     if request.response_schema is not None:

@@ -109,7 +109,7 @@ def clean_semantic_noise(soup: BeautifulSoup)->BeautifulSoup:
     return soup
 
     
-async def extract_content_from_html(html_content: str) -> str:
+def extract_content_from_html(html_content: str) -> str:
     """Convert an entire raw HTML webpage string into isolated, highly relevant body text.
 
     This coordinator initializes the processor, executes a multi-stage layout 
