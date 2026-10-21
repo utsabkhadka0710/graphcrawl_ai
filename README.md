@@ -41,7 +41,7 @@ Because extraction goes through `litellm`, GraphCrawl AI can talk to any provide
 Install from source:
 
 ```bash
-git clone https://github.com/your-username/graphcrawl_ai.git
+git clone https://github.com/utsabkhadka0710/graphcrawl_ai.git
 cd graphcrawl_ai
 ```
 
