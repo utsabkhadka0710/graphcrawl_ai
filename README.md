@@ -1,111 +1,142 @@
-# GraphCrawl AI 🕷️🕸️
+<p align="center"> <img src="assets/logo.png" alt="GraphCrawl AI logo" width="50%"> </p> 
 
-> AI-powered web scraping and structured data extraction — currently under active development.
+<h1 align="center">GraphCrawl AI 🕷️🕸️</h1>
 
-⚠️ **This project is workable but not production-ready yet.** Core extraction works end-to-end, but the API and internals are still being refined and will keep changing. See [Known limitations](#known-limitations-current-state) before relying on it.
+<p align="center">
+  <strong>Turn any webpage into clean, typed data with one async function call.</strong>
+</p>
 
----
+<p align="center">
+  <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-blue">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+  <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange">
+</p>
 
-## What is it?
+GraphCrawl AI is an open-source Python library that fetches a public webpage, strips it down to the text that matters, and uses an LLM to return a validated [Pydantic](https://docs.pydantic.dev/) object. No HTML parsing, no selectors, no prompt engineering.
 
-GraphCrawl AI is a Python library that turns any public webpage into structured, typed data using AI. You point it at a URL, tell it what you want (or pick a built-in quick option), and get back a clean Pydantic model — no HTML parsing boilerplate, no prompt engineering required.
+```python
+result = await crawl_url(
+    source="https://github.com/utsabkhadka0710/graphcrawl_ai",
+    quick_option="summary",
+    model="gemini/gemini-2.5-flash",
+)
 
----
+print(result.model_dump_json(indent=2))
+```
+
+Example output (shortened; the exact wording varies by model):
+
+```json
+{
+  "status": "success",
+  "summary": "GraphCrawl AI is an AI-powered Python library designed for web scraping and extracting structured, typed data from public webpages. It streamlines the process by fetching, cleaning HTML, and then using a Large Language Model (LLM) to extract information into Pydantic models, avoiding manual HTML parsing. ...",
+  "key_takeaways": [
+    "GraphCrawl AI is a Python library for AI-powered web scraping and structured data extraction.",
+    "It converts any public webpage into structured, typed data using Pydantic models, eliminating the need for HTML parsing or prompt engineering.",
+    "..."
+  ]
+}
+```
+
+> ⚠️
+> **Alpha software.** The core flow works end-to-end, but the API will keep changing and it is **not production-ready yet**. See [Known limitations](#known-limitations) before relying on it.
+
+## Contents
+
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Choosing a model and setting credentials](#choosing-a-model-and-setting-credentials)
+- [Usage](#usage)
+- [Response models](#response-models)
+- [Error handling](#error-handling)
+- [Project structure](#project-structure)
+- [Development and testing](#development-and-testing)
+- [REST API](#rest-api)
+- [Known limitations](#known-limitations)
+- [Responsible use](#responsible-use)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- **One function.** `crawl_url()` handles fetching, cleaning, prompting, and validation.
+- **Typed output.** Every result is a Pydantic model, so you get validation and `.model_dump()` / `.model_dump_json()` for free.
+- **Built-in quick options.** `summary`, `contacts`, and `products` ship with tuned prompts and response schemas.
+- **Bring your own prompt and schema.** Describe what you want and define the shape of the answer as a Pydantic class.
+- **Multi-model.** Built on [Instructor](https://python.useinstructor.com/) and [LiteLLM](https://docs.litellm.ai/), so you switch providers by changing one string.
+- **Async-first.** `crawl_url()` is a coroutine, so it fits naturally into async apps and lets you crawl many pages concurrently.
+- **Sensible fetching.** Configurable timeouts and retries, with clear, specific exceptions.
+- **Open source.** MIT licensed.
 
 ## How it works
 
+```mermaid
+flowchart LR
+    A["URL"] --> B["Fetch HTML<br/>httpx + retries"]
+    B --> C["Clean text<br/>BeautifulSoup + lxml"]
+    C --> D["Resolver<br/>picks prompt + schema"]
+    D --> E["LLM call<br/>Instructor + LiteLLM"]
+    E --> F["Typed<br/>Pydantic object"]
 ```
-URL → HTTP fetch → HTML cleaning → LLM (via instructor + litellm) → Pydantic response object
-```
 
-1. **Fetcher** (`graphcrawl_ai/extraction/html_from_url.py`) — downloads the raw HTML with retry and timeout logic (`httpx`)
-2. **Parser** (`graphcrawl_ai/extraction/text_from_html.py`) — strips scripts, styles, hidden elements, cookie/consent overlays, and link-heavy nav/footer noise, then normalizes whitespace (`beautifulsoup4` + `lxml`)
-3. **Resolver** (`graphcrawl_ai/resolver/url_resolver.py`) — picks the right prompt and response schema based on your chosen `quick_option`, fetches the page, and cleans it
-4. **LLM engine** (`graphcrawl_ai/llm/engine.py`) — sends the clean text to your chosen model through [`instructor`](https://python.useinstructor.com/) (wrapping [`litellm`](https://docs.litellm.ai/)) and parses the JSON response back into a typed Pydantic model
-
-Because extraction goes through `litellm`, GraphCrawl AI can talk to any provider `litellm` supports (Gemini, OpenAI, Anthropic, etc.) — you just need to pass the right `model` string and credentials. See [Choosing a model](#choosing-a-model) below.
-
-`crawl_url()` is an **async** function — call it with `await` inside an async context, or with `asyncio.run(...)` from a plain script.
-
----
-
-## Requirements
-
-- Python ≥ 3.11
-- An API key for whichever LLM provider/model you pass to `crawl_url()`
-
----
+1. **Fetcher** (`extraction/html_from_url.py`): downloads the page with `httpx`. Server errors (5xx) and timeouts are retried; client errors (4xx) and network failures fail immediately.
+2. **Parser** (`extraction/text_from_html.py`): removes scripts, styles, hidden elements, dialogs, cookie and newsletter overlays, and link-heavy navigation/footer blocks, then normalizes whitespace.
+3. **Resolver** (`resolver/url_resolver.py`): chooses the prompt and response schema for your `quick_option` (or uses your own).
+4. **LLM engine** (`llm/engine.py`): sends the cleaned text to your chosen model through Instructor and LiteLLM, and parses the reply into the schema. Provider failures are mapped to specific exceptions.
 
 ## Installation
-
-Install from source:
-
+ 
+GraphCrawl AI is not on PyPI yet, so install it from source. **Requires Python 3.11 or newer** (the pinned versions below were verified on Python 3.12).
+ 
 ```bash
 git clone https://github.com/utsabkhadka0710/graphcrawl_ai.git
 cd graphcrawl_ai
 ```
-
-Initialize a virtual environment and install `graphcrawl_ai` in editable mode:
-
-- macOS/Linux
+ 
+Create and activate a virtual environment:
+ 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -e .
+# macOS / Linux
+python3 -m venv .venv
+source .venv/bin/activate
 ```
-- Windows
+ 
+```powershell
+# Windows (PowerShell)
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+ 
+### Recommended: install the exact tested versions
+ 
+The repo ships a [`requirements-lock.txt`](requirements-lock.txt) that pins every dependency, direct and transitive, to the versions the project was built and tested with (for example `litellm==1.93.0`, `instructor==1.15.4`, and `pydantic==2.13.4`). Install from it first, then install GraphCrawl on top **without letting pip touch the dependencies**:
+ 
 ```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -e .
+pip install -r requirements-lock.txt
+pip install -e . --no-deps
 ```
-
-For running the test suite, also install the dev extras:
-
+ 
+The lock file also includes the test tools (`pytest`, `respx`, and friends), so you can run the test suite straight away. Platform-specific packages such as `uvloop` (which has no Windows build) are skipped automatically where they don't apply.
+ 
+> **Why pin?** `pyproject.toml` only lists package names, so a plain `pip install -e .` pulls whatever the newest releases are today. Fast-moving libraries like LiteLLM and Instructor change often, and a newer release can change behavior or break the code. The lock file removes that risk.
+ 
+### Alternative: install the latest versions
+ 
+If you want to try the newest releases (for example to test compatibility), install from `pyproject.toml` instead:
+ 
 ```bash
-pip install -e ".[dev]"
+pip install -e .          # runtime only
+pip install -e ".[dev]"   # plus test tools
 ```
-
----
-
-## Configuration
-
-`crawl_url()` takes `model` and `api_key` directly, so you have two ways to supply credentials:
-
-**Option 1 — pass `api_key` explicitly (recommended, most reliable):**
-
-```python
-import asyncio
-from graphcrawl_ai import crawl_url
-
-result = asyncio.run(crawl_url(
-    source="https://example.com",
-    quick_option="summary",
-    model="gemini/gemini-2.5-flash",
-    api_key="your_api_key_here",
-))
-```
-
-**Option 2 — rely on environment variables:**
-
-If you omit `api_key`, `litellm` falls back to its standard provider-prefixed environment variables (inferred from the `model` string), e.g. `GEMINI_API_KEY` for `gemini/...` models or `OPENAI_API_KEY` for `openai/...` models:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-The repo's `.env.example` uses a generic `PROVIDER_API_KEY` placeholder as a reminder to set *some* provider's key — rename it to match whichever provider you're actually using (`GEMINI_API_KEY`, `OPENAI_API_KEY`, etc.), since `litellm` doesn't read a literal `PROVIDER_API_KEY` variable.
-
-If you load env files yourself, make sure this runs before calling `crawl_url()`:
-
-```python
-from dotenv import load_dotenv
-load_dotenv()
-```
-
----
+ 
+Only the pinned versions above are tested, so anything newer may behave differently.
 
 ## Quick start
+
+You need an API key for whichever provider you choose (or a local model, see below).
 
 ```python
 import asyncio
@@ -118,14 +149,15 @@ async def main():
         model="gemini/gemini-2.5-flash",
         api_key="your_api_key_here",
     )
-    print(result.model_dump_json(indent=2))
     print(result.summary)
     print(result.key_takeaways)
+    print(result.model_dump_json(indent=2))
 
 asyncio.run(main())
 ```
 
-### Output:
+Example output (the exact wording varies by model):
+
 ```json
 {
   "status": "success",
@@ -137,13 +169,46 @@ asyncio.run(main())
 }
 ```
 
----
+> **Notebook?** In Jupyter, skip `asyncio.run()` and call `result = await crawl_url(...)` directly in a cell.
+
+## Choosing a model and setting credentials
+
+`model` is a [LiteLLM](https://docs.litellm.ai/docs/providers) model string, in the form `provider/model-name`.
+
+| Provider | Example `model` | Environment variable |
+|---|---|---|
+| Google Gemini | `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
+| OpenAI | `openai/gpt-4o` | `OPENAI_API_KEY` |
+| Anthropic | `anthropic/claude-sonnet-5-5` | `ANTHROPIC_API_KEY` |
+| Ollama (local) | `ollama/llama3.1` | none (needs Ollama running locally) |
+
+Model names change often, so check your provider's docs for the current list.
+
+> **What has been tested:** the core flow has been exercised with Gemini models and a local model through Ollama. Other providers should work through LiteLLM but haven't been verified in this project yet. Small local models may produce typos or miss fields, so check their output.
+
+There are two ways to supply credentials.
+
+**Option 1: pass `api_key` explicitly.** This is the most reliable option.
+
+```python
+result = await crawl_url(
+    source="https://example.com",
+    quick_option="summary",
+    model="openai/gpt-4o",
+    api_key="sk-...",
+)
+```
+
+**Option 2: use environment variables.** If you omit `api_key`, LiteLLM looks up the standard variable for the provider in your `model` string. Copy `.env.example` to `.env`, fill in the key that matches your provider, and load it before calling `crawl_url()`:
+
+```python
+from dotenv import load_dotenv
+load_dotenv()  # GraphCrawl does not do this for you
+```
 
 ## Usage
 
 ### `crawl_url()`
-
-The single public entry point for the library — an `async` function.
 
 ```python
 async def crawl_url(
@@ -160,34 +225,30 @@ async def crawl_url(
 ) -> BaseModel
 ```
 
-- `source` is required — the webpage to read.
-- You must provide either `prompt` or `quick_option`, otherwise `PromptMissingError` is raised.
-- If you pass a custom `prompt`, you **must** also pass a `response_schema` (a Pydantic model class) — otherwise `ResponseSchemaMissingError` is raised. `quick_option` doesn't need this since it comes with a built-in prompt and schema.
-- `model` is the `litellm`-style provider/model string (e.g. `"gemini/gemini-2.5-flash"`, `"openai/gpt-4o"`).
-- `api_key` is optional — omit it to let `litellm` resolve credentials from the environment instead (see [Configuration](#configuration)).
-- `llm_timeout`, `llm_retry`, `crawl_timeout`, and `crawl_retry` accept ints, floats, or numeric strings — they're coerced to integers internally (see [Tuning timeouts and retries](#tuning-timeouts-and-retries)).
+| Parameter | Required | Description |
+|---|---|---|
+| `source` | Yes | URL of the page to read. Must start with `http://` or `https://`. |
+| `model` | Yes | LiteLLM model string, e.g. `"gemini/gemini-2.5-flash"`. |
+| `quick_option` | One of this or `prompt` | `"summary"`, `"contacts"`, or `"products"`. Comes with a built-in prompt and schema. |
+| `prompt` | One of this or `quick_option` | Your own extraction instructions. If you pass both, your `prompt` is used. |
+| `response_schema` | Required with `prompt` | A Pydantic model class describing the shape of the answer. |
+| `api_key` | No | Provider API key. Omit to use environment variables. |
+| `llm_timeout` | No | Seconds to wait for the LLM. Default `60`. |
+| `llm_retry` | No | Retry attempts for the LLM call. Default `3`. |
+| `crawl_timeout` | No | Seconds to wait for the webpage. Default `30`. |
+| `crawl_retry` | No | Retry attempts for the page fetch. Default `3`. |
 
-### Choosing a model
-
-`model` is passed straight through to `litellm`, so any model string `litellm` supports should work, including (but not limited to):
-
-| Provider | Example `model` string |
-|---|---|
-| Google Gemini | `"gemini/gemini-2.5-flash"` |
-| OpenAI | `"openai/gpt-4o"` |
-| Anthropic | `"anthropic/claude-sonnet-4-5"` |
-
-This has only been exercised against Gemini models so far in this project's own examples — other providers should work given `litellm`'s support, but haven't been verified here yet.
+The four timeout and retry values accept ints, floats, or numeric strings. They are rounded **up** to whole numbers (`2.5` becomes `3`). Anything non-numeric raises `InvalidDataError`.
 
 ### Quick options
 
-| Option | What it extracts | Response type |
+| Option | Extracts | Returns |
 |---|---|---|
-| `"summary"` | Page summary + key takeaways | `UrlSummaryResponse` |
+| `"summary"` | A page summary and key takeaways | `UrlSummaryResponse` |
 | `"contacts"` | Emails, phones, addresses, social links | `UrlContactsResponse` |
-| `"products"` | Product name, price, description, rating, units sold | `UrlProductsResponse` |
+| `"products"` | Name, price, description, rating, units sold | `UrlProductsResponse` |
 
-### Example: extract contacts
+**Contacts**
 
 ```python
 result = await crawl_url(
@@ -201,7 +262,7 @@ print(result.contact_info.phones)
 print(result.contact_info.social_links)
 ```
 
-### Example: extract products
+**Products**
 
 ```python
 result = await crawl_url(
@@ -215,13 +276,14 @@ if result.products_found:
         print(product.name, product.price)
 ```
 
-### Example: custom prompt + custom response schema
+### Custom prompt and response schema
 
-A custom `prompt` always needs a matching `response_schema` so `instructor` knows how to shape the answer:
+Write your own instructions and describe the answer you want as a Pydantic model. A custom `prompt` **always** needs a matching `response_schema`, so the library knows how to shape and validate the reply.
 
 ```python
-from pydantic import BaseModel
+import asyncio
 from typing import Optional
+from pydantic import BaseModel
 from graphcrawl_ai import crawl_url
 
 class UserInfo(BaseModel):
@@ -233,18 +295,18 @@ class UserInfo(BaseModel):
 class Schema(BaseModel):
     info: UserInfo
 
-result = await crawl_url(
+result = asyncio.run(crawl_url(
     source="https://github.com/some-user/",
     prompt="Extract detailed information about the user",
     response_schema=Schema,
     model="gemini/gemini-2.5-flash",
-)
+))
 
 print(result.info.name)
 print(result.model_dump_json(indent=4))
 ```
 
-See `examples/live_demo_example.py` for a runnable version of this pattern.
+A runnable version lives in [`examples/live_demo_example.py`](examples/live_demo_example.py). It makes a real network request and a real LLM call.
 
 ### Tuning timeouts and retries
 
@@ -254,108 +316,73 @@ result = await crawl_url(
     quick_option="summary",
     model="gemini/gemini-2.5-flash",
     crawl_timeout=60,  # seconds to wait for the webpage
-    crawl_retry=5,     # retry attempts for the HTTP fetch
+    crawl_retry=5,     # fetch attempts
     llm_timeout=120,   # seconds to wait for the LLM
-    llm_retry=5,       # retry attempts for the LLM call
+    llm_retry=5,       # LLM retry attempts
 )
 ```
 
-All four values are coerced to integers internally (via ceiling rounding), so floats like `crawl_timeout=2.5` are accepted and rounded up to `3`. Passing a non-numeric, non-`None` value (a string that isn't a number, a list, a dict, etc.) raises `InvalidDataError`.
+### Crawling several pages concurrently
 
----
+Because `crawl_url()` is async, you can fan out with `asyncio.gather`:
+
+```python
+urls = ["https://example.com", "https://example.org"]
+
+results = await asyncio.gather(*[
+    crawl_url(source=u, quick_option="summary", model="gemini/gemini-2.5-flash")
+    for u in urls
+])
+```
+
+Keep your provider's rate limits in mind when you do this.
 
 ## Response models
 
-All responses extend `UrlBaseResponse`, which carries a `status` field typed as `Literal["success", "failure"]`. Every response is a valid Pydantic model — call `.model_dump()` for a dict or `.model_dump_json()` for JSON.
+All built-in responses extend `UrlBaseResponse`, which carries a `status` field. Every response is a normal Pydantic model, so use `.model_dump()` for a dict or `.model_dump_json()` for JSON.
 
-```python
-result = await crawl_url(
-    source="https://example.com",
-    quick_option="summary",
-    model="gemini/gemini-2.5-flash",
-)
-
-print(result.status)                    # "success"
-print(result.model_dump())              # dict
-print(result.model_dump_json(indent=2)) # pretty JSON
-```
-
-> **Note:** the built-in quick-option prompts (`graphcrawl_ai/llm/prompts.py`) instruct the model to return `"status": "error"` on a safety-policy violation, but `UrlBaseResponse.status` is currently typed as `Literal["success", "failure"]` — `"error"` isn't one of the allowed values. This mismatch is a known rough edge; see [Known limitations](#known-limitations-current-state).
-
----
-
-## Project structure
-
-```
-graphcrawl_ai-main/
-├── graphcrawl_ai/
-│   ├── __init__.py                                   # Public exports: crawl_url + crawler/fetch exceptions
-│   ├── crawler/
-│   │   └── crawl_url.py                              # Public API: async crawl_url()
-│   ├── extraction/
-│   │   ├── html_from_url.py                          # HTTP fetch with retry (httpx)
-│   │   └── text_from_html.py                         # HTML → clean text (bs4 + lxml)
-│   ├── llm/
-│   │   ├── client.py                                 # instructor + litellm async client setup
-│   │   ├── config.py                                  # ModelSpec dataclass + unused resolve_model/build_kwargs stubs
-│   │   ├── engine.py                                  # Runs the LLM extraction call, maps provider errors
-│   │   └── prompts.py                                 # Built-in prompts for quick options (summary/contacts/products)
-│   ├── resolver/
-│   │   └── url_resolver.py                           # Routes quick_option/prompt → fetch + schema → LLM job
-│   ├── models/crawl_url/
-│   │   ├── request_models/
-│   │   │   ├── user_request.py                       # UrlExtractionRequest, QuickOption
-│   │   │   └── request_to_llm.py                     # ExtractionJobToLLM (resolver → engine)
-│   │   └── response_models/
-│   │       └── llm_response.py                       # UrlBaseResponse, UrlSummaryResponse, UrlContactsResponse, UrlProductsResponse
-│   ├── exceptions/
-│   │   ├── crawler/crawl_url_exceptions.py           # UrlMissingError, PromptMissingError, ResponseSchemaMissingError, InvalidDataError
-│   │   ├── extration/html_from_url_exceptions.py     # FetchError and subclasses
-│   │   └── llm/llm_extractor_exceptions.py           # LLMError and subclasses
-│   ├── utils/
-│   │   └── safe_cast.py                              # Numeric coercion for timeout/retry params
-│   └── tests/                                         # pytest suite (unit tests, mocked HTTP via respx)
-│       ├── test_crawl_url_schema_validation.py
-│       ├── test_extract_content_from_html.py
-│       ├── test_fetch_html.py
-│       └── test_safe_cast.py
-├── api/
-│   ├── main.py                                        # FastAPI app — currently just / and /health (in progress)
-│   └── routes/                                        # Empty package — no routes wired up yet
-├── examples/
-│   ├── basic_usage.py                                 # Empty placeholder — not yet written
-│   └── live_demo_example.py                           # Runnable example: custom prompt + custom response_schema
-├── pyproject.toml
-└── .env.example
-```
-
----
-
-## REST API
-
-A FastAPI application is included under `api/` and is currently a bare skeleton — it only exposes `/` and `/health`, with no crawling endpoints wired up yet (`api/routes/` is an empty package reserved for that work). To run it locally:
-
-```bash
-uvicorn api.main:app --reload
-```
-
----
+| Model | Fields |
+|---|---|
+| `UrlSummaryResponse` | `status`, `summary: str`, `key_takeaways: list[str]` |
+| `UrlContactsResponse` | `status`, `contact_info` with `emails`, `phones`, `addresses`, `social_links` (each `list[str]`) |
+| `UrlProductsResponse` | `status`, `products_found: bool`, `products: list[ProductItem]` |
+| `ProductItem` | `name`, `price`, `description`, `rating`, `total_sold` (all `str`) |
 
 ## Error handling
 
-Crawling and validation errors are exported from `graphcrawl_ai`:
+Errors fall into three groups: invalid input to `crawl_url()`, failures while fetching the page, and failures while talking to the LLM.
+
+| Exception | Raised when | Importable from `graphcrawl_ai` |
+|---|---|:---:|
+| `UrlMissingError` | `source` is missing or empty | ✅ |
+| `PromptMissingError` | Neither `prompt` nor `quick_option` was given | ✅ |
+| `InvalidDataError` | A parameter has an invalid value (check `.param_name`), including a missing `model` | ✅ |
+| `ResponseSchemaMissingError` | A custom `prompt` was given without a valid `response_schema` | ❌ |
+| `InvalidUrl` | The URL is malformed | ✅ |
+| `ProtocolError` | The URL lacks `http://` or `https://` | ✅ |
+| `HTTPStatusError` | The site returned an error status (4xx, or 5xx after retries) | ✅ |
+| `NetworkError` | A connection or DNS failure | ✅ |
+| `RetryTimeoutError` | The page kept timing out until retries ran out | ✅ |
+| `LLMAuthenticationError` | The provider rejected your API key | ❌ |
+| `LLMTimeoutError` | The LLM call timed out | ❌ |
+| `LLMRateLimitError` | The provider rate-limited the request | ❌ |
+| `LLMContextWindowExceededError` | The page text is too long for the model | ❌ |
+| `LLMRetryError` | Instructor ran out of retries before getting a valid reply | ❌ |
+| `LLMUnavailableError` | The provider is unavailable | ❌ |
+| `APIError` | A provider connection or API error | ❌ |
+| `LLMUnknownError` | Any other LLM failure | ❌ |
+
+Exceptions marked ❌ live in their own modules:
+
+- `graphcrawl_ai.exceptions.crawler.crawl_url_exceptions`
+- `graphcrawl_ai.exceptions.llm.llm_extractor_exceptions`
 
 ```python
 from graphcrawl_ai import (
-    crawl_url,
-    UrlMissingError,
-    PromptMissingError,
-    InvalidDataError,
-    InvalidUrl,
-    HTTPStatusError,
-    ProtocolError,
-    NetworkError,
-    RetryTimeoutError,
+    crawl_url, PromptMissingError, InvalidDataError, HTTPStatusError, RetryTimeoutError,
+)
+from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import (
+    LLMAuthenticationError, LLMContextWindowExceededError,
 )
 
 try:
@@ -364,49 +391,112 @@ try:
         quick_option="summary",
         model="gemini/gemini-2.5-flash",
     )
-except UrlMissingError:
-    print("No source URL was provided.")
 except PromptMissingError:
     print("Provide either `prompt` or `quick_option`.")
 except InvalidDataError as e:
     print(f"Bad value for parameter: {e.param_name}")
-except HTTPStatusError as e:
-    print(f"The page returned an error: {e}")
+except (HTTPStatusError, RetryTimeoutError) as e:
+    print(f"Could not load the page: {e}")
+except LLMAuthenticationError:
+    print("Check your API key.")
+except LLMContextWindowExceededError:
+    print("This page is too long for the chosen model.")
 ```
 
-- `UrlMissingError`, `PromptMissingError`, `ResponseSchemaMissingError`, and `InvalidDataError` subclass `CrawlError` (raised for bad `crawl_url()` inputs).
-- `InvalidUrl`, `HTTPStatusError`, `ProtocolError`, `NetworkError`, and `RetryTimeoutError` subclass `FetchError` (raised while fetching the page). Note: `ResponseSchemaMissingError` is defined in the same module as the other crawler exceptions but isn't yet re-exported from the package root — import it from `graphcrawl_ai.exceptions.crawler.crawl_url_exceptions` if you need to catch it directly.
-- LLM-side failures (`LLMAuthenticationError`, `LLMTimeoutError`, `LLMRetryError`, `LLMRateLimitError`, `LLMContextWindowExceededError`, `LLMUnavailableError`, `APIError`, `LLMUnknownError`) subclass `LLMError` in `graphcrawl_ai.exceptions.llm.llm_extractor_exceptions`, but aren't re-exported from the package root either — import them directly from that module if you need to catch them.
+## Project structure
 
----
+```
+graphcrawl_ai/
+├── graphcrawl_ai/
+│   ├── __init__.py                  # Public exports: crawl_url + common exceptions
+│   ├── crawler/
+│   │   └── crawl_url.py             # Public API: async crawl_url()
+│   ├── extraction/
+│   │   ├── html_from_url.py         # HTTP fetch with retry (httpx)
+│   │   └── text_from_html.py        # HTML -> clean text (bs4 + lxml)
+│   ├── resolver/
+│   │   └── url_resolver.py          # Routes quick_option/prompt -> fetch + schema -> LLM job
+│   ├── llm/
+│   │   ├── client.py                # Instructor + LiteLLM async client
+│   │   ├── engine.py                # Runs the LLM call, maps provider errors
+│   │   ├── prompts.py               # Built-in prompts (summary / contacts / products)
+│   │   └── config.py                # ModelSpec + stubs for future model fallbacks (unused)
+│   ├── models/crawl_url/
+│   │   ├── request_models/          # UrlExtractionRequest, ExtractionJobToLLM
+│   │   └── response_models/         # UrlSummary/Contacts/ProductsResponse
+│   ├── exceptions/                  # crawler, extraction, and llm exception classes
+│   ├── utils/safe_cast.py           # Numeric coercion for timeout/retry params
+│   └── tests/                       # pytest suite (HTTP mocked with respx)
+├── api/                             # FastAPI skeleton (health checks only for now)
+├── examples/
+│   ├── live_demo_example.py         # Custom prompt + schema, real network + LLM call
+│   └── basic_usage.py               # Empty placeholder
+├── .env.example
+├── CONTRIBUTING.md
+├── LICENSE
+└── pyproject.toml
+```
 
-## Testing
-
-The project now has a real `pytest` suite under `graphcrawl_ai/tests/`, covering schema validation, HTML fetching (with `respx`-mocked HTTP responses), HTML content cleaning, and the numeric-coercion helper.
+## Development and testing
 
 ```bash
 pip install -e ".[dev]"
 pytest graphcrawl_ai/tests/
 ```
 
-`examples/live_demo_example.py` is separate from the test suite — it's a runnable script that makes a real network request and a real LLM call, useful for manual smoke-testing against a live provider.
+The suite covers input validation, HTML fetching (with mocked HTTP), content cleaning, LLM error mapping, and numeric coercion. The tests do not call any real website or LLM.
 
----
+`examples/live_demo_example.py` is separate. It makes real requests, which makes it useful as a manual smoke test against a live provider.
 
-## Known limitations (current state)
+## REST API
 
-This project is workable but still rough around the edges:
+A [FastAPI](https://fastapi.tiangolo.com/) app lives under `api/`, but it is only a skeleton: it exposes `/` and `/health`, and no crawling endpoints yet.
 
-- **`response_schema` is required alongside a custom `prompt`.** If you write your own extraction prompt, you must also supply a matching Pydantic `response_schema`, or `crawl_url()` raises `ResponseSchemaMissingError`. There's no default/auto schema for custom prompts.
-- **The `status` field can't actually represent the "policy violation" case.** The built-in quick-option prompts ask the model to return `"status": "error"` when content violates safety policy, but `UrlBaseResponse.status` only allows `"success"` or `"failure"`.
-- **`examples/basic_usage.py` is empty.** Use the [Quick start](#quick-start) and [Usage](#usage) sections above, or `examples/live_demo_example.py`, instead.
-- **`llm/config.py` is unused.** `ModelSpec` and the `resolve_model()`/`build_kwargs()` stubs exist for a future model-fallback/config system, but the current call path in `llm/engine.py` uses `model`/`api_key` directly rather than going through them.
-- **The FastAPI app under `api/` has no real endpoints** — just health checks, and `api/routes/` is an empty package.
-- **`ResponseSchemaMissingError` and the LLM-side exceptions aren't re-exported from the package root** — import them from their respective exception modules if you need to catch them.
-- **Only Gemini models have been exercised in practice** so far, even though `model` accepts any `litellm`-supported provider string in principle.
+```bash
+uvicorn api.main:app --reload
+```
 
----
+## Known limitations
+
+GraphCrawl AI is early. Be aware of the following.
+
+- **Static HTML only.** Pages are fetched with a plain HTTP client, so content rendered by JavaScript after load will not be seen. Login-protected pages are not supported.
+- **No chunking.** The whole cleaned page is sent to the model. Very long pages can raise `LLMContextWindowExceededError`.
+- **Heuristic cleaning.** Cookie banners and navigation are removed by tag, role, and keyword rules. Plain-prose notices with no identifying class or id can slip through.
+- **`status` can't represent a policy violation.** The built-in prompts tell the model to return `"status": "error"` for content that violates safety policies, but `UrlBaseResponse.status` only allows `"success"` or `"failure"`.
+- **Custom prompts need a schema.** There is no automatic schema for a custom `prompt`.
+- **Limited provider verification.** See [Choosing a model](#choosing-a-model-and-setting-credentials).
+- **Some exceptions aren't exported from the package root.** Import `ResponseSchemaMissingError` and the LLM errors from their modules (see [Error handling](#error-handling)).
+- **Logging.** The fetcher configures `logging` at `INFO` level on import and logs each fetch attempt.
+- **Heavier install than needed.** FastAPI and Uvicorn are installed as core dependencies, even though the REST API is only a skeleton.
+- **Unfinished pieces.** `llm/config.py` is a stub that isn't used yet, and `examples/basic_usage.py` is empty.
+
+## Responsible use
+
+GraphCrawl AI sends a plain HTTP request with a `GraphCrawl/0.1.0` user agent. It does **not** check `robots.txt`, throttle requests, or identify you to the site. You are responsible for:
+
+- following each site's terms of service and `robots.txt`,
+- keeping request volume reasonable,
+- not scraping personal data in ways that violate privacy law or the site's rules.
+
+Also remember that the cleaned page text is sent to the LLM provider you choose. Do not use a hosted model on content you are not allowed to share with that provider.
+
+## Roadmap
+
+Directions suggested by the current code, roughly in priority order:
+
+- [ ] Fix the `status` type so policy violations are representable
+- [ ] Export all public exceptions from the package root
+- [ ] Write `examples/basic_usage.py`
+- [ ] Wire up real crawling endpoints in the REST API
+- [ ] Model fallbacks and configuration (`llm/config.py`)
+- [ ] Browser-based fetching (for example Playwright) for JavaScript-rendered pages
+- [ ] Publish to PyPI
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and conventions, and open an issue if you hit a bug or have an idea. When reporting a bug, include the URL, the `quick_option` or `prompt` you used, the full traceback, and your Python version and OS.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+Released under the [MIT License](LICENSE).
