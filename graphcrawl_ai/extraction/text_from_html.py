@@ -57,6 +57,8 @@ def clean_overlay_noise(soup: BeautifulSoup)->BeautifulSoup:
             tag.decompose()
     
     for container in soup.find_all(["div", "aside", "section"]):
+        if container.attrs is None:
+            continue
         container_id = container.get('id','')
         container_class = "".join(container.get('class',[])) if container.get('class') else ""
         
