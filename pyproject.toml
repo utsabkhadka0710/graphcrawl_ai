@@ -22,7 +22,7 @@ dependencies = [
     "lxml",
 ]
 
-[pyproject.optional-dependencies]
+[project.optional-dependencies]
 dev = ["pytest", "pytest-mock", "pytest_asyncio", "respx"]
 
 # [tool.setuptools]
