@@ -25,10 +25,8 @@ class LLMEngineMockResponseModel(BaseModel):
     summary: str
     information: list[str]
 
-
 @pytest.mark.asyncio
-async def test_llm_extract():
-    """Verify that llm_extract successfully forwards structured extraction requests and returns parsed responses."""
+async def test_llm_extract_valid_request_forward_and_return_response():
     mock_request = ExtractionJobToLLM(
         content="This is an test parsed content cleaned from fetched HTML",
         prompt="Extract useful information",
@@ -56,6 +54,19 @@ async def test_llm_extract():
         result = await llm_extract(request=mock_request)
 
         assert result == mock_llm_response
+
+        mock_create.assert_awaited_once_with(
+            model='provider/model',
+            api_key='model-api-key',
+            response_model=LLMEngineMockResponseModel,
+            timeout=60,
+            num_retries=3,
+            max_retries=3,
+            messages=[
+                {'role': 'system', 'content': 'Extract useful information'},
+                {'role': 'user', 'content': 'This is an test parsed content cleaned from fetched HTML'}
+            ]
+        )
 
 
 def wrap_instructor_error_cause(cause: Exception) -> InstructorError:
