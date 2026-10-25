@@ -103,7 +103,6 @@ async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
                         f"Source Cotent: \n{content}"
                     )
                 }
-
             ],
         )
     except InstructorError as e:
