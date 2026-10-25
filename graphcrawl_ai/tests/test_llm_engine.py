@@ -22,12 +22,14 @@ from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import (
 
 
 class LLMEngineMockResponseModel(BaseModel):
-    """Dummy Pydantic schema used to mock structured outputs from the LLM engine."""
+    """Define a mock Pydantic schema for the structured response returned by the LLM."""
     summary: str
     information: list[str]
 
+
 @pytest.mark.asyncio
 async def test_llm_extract_valid_request_forward_and_return_response():
+    """Verify that a valid extraction request is forwarded correctly and its response is returned."""
     mock_request = ExtractionJobToLLM(
         content="This is an test parsed content cleaned from fetched HTML",
         prompt="Extract useful information",
@@ -37,9 +39,12 @@ async def test_llm_extract_valid_request_forward_and_return_response():
         llm_timeout=30,
         llm_retry=2
     )
+
+    # Mock the Client dependency to avoid making real LLM API calls.
     with patch('graphcrawl_ai.llm.engine.Client') as MockClientClass:
         mock_client_instance = MockClientClass.return_value
 
+        # Use AsyncMock because create() is awaited by llm_extract().
         mock_create = AsyncMock()
         mock_client_instance.get_client.return_value.create = mock_create
 
@@ -51,13 +56,14 @@ async def test_llm_extract_valid_request_forward_and_return_response():
                 "This is mock informantion 3",
             ]
         )
-
         mock_create.return_value = mock_llm_response
 
         result = await llm_extract(request=mock_request)
 
+        # Ensure the extraction result is returned unchanged.
         assert result == mock_llm_response
 
+        # Verify that all request parameters are forwarded to the LLM client.
         mock_create.assert_awaited_once_with(
             model='provider/model',
             api_key='model-api-key',
@@ -73,14 +79,14 @@ async def test_llm_extract_valid_request_forward_and_return_response():
 
 
 def wrap_instructor_error_cause(cause: Exception) -> InstructorError:
-    """Wrap an underlying provider exception inside an InstructorError instance to mimic real runtime wrapper behavior."""
+    """Create an InstructorError whose __cause__ references the supplied provider exception."""
     outer_exc = InstructorError()
     outer_exc.__cause__ = cause
     return outer_exc
 
 
 def lite_exception(cls, **kw) -> Exception:
-    """Helper factory that builds pre-configured LiteLLM exception instances for testing."""
+    """Create a LiteLLM exception with the required provider and model metadata for testing."""
     return cls(
         message="error",
         llm_provider="mock-provider",
@@ -90,7 +96,7 @@ def lite_exception(cls, **kw) -> Exception:
 
 
 def fake_response() -> httpx.Response:
-    """Construct a mock HTTP 403 response object for permission testing."""
+    """Create a mock HTTP 403 response for constructing permission-denied exceptions."""
     return httpx.Response(
         status_code=403,
         request=httpx.Request(method="POST", url="https://mock.com")
@@ -100,7 +106,7 @@ def fake_response() -> httpx.Response:
 @pytest.mark.parametrize(
     "raw_exception, raised_exception",
     [
-        # LiteLLM's errors
+        # Verify mappings for specific LiteLLM provider errors.
         (lite_exception(litellm.AuthenticationError), LLMAuthenticationError),
         (lite_exception(litellm.PermissionDeniedError, response=fake_response()), LLMAuthenticationError),
         (lite_exception(litellm.NotFoundError), LLMNotFoundError),
@@ -124,17 +130,20 @@ def fake_response() -> httpx.Response:
     ]
 )
 def test_llm_engine_map_litellm_exceptions(raw_exception, raised_exception):
-    """Verify that LiteLLM provider exceptions wrapped inside Instructor errors map to their correct domain exceptions."""
-    assert _map_exceptions(wrap_instructor_error_cause(raw_exception)) is raised_exception
+    """Verify that wrapped LiteLLM exceptions map to their corresponding domain exception classes."""
+    # Simulate an Instructor error carrying the original provider exception as its cause.
+    instructor_error = wrap_instructor_error_cause(raw_exception)
+
+    assert _map_exceptions(instructor_error) is raised_exception
 
 
 @pytest.mark.parametrize(
     "raw_exception, raised_exception",
     [
-        # Instructor's error
+        # Instructor retry exhaustion should map to the dedicated retry error.
         (InstructorRetryException(n_attempts=3, total_usage=3), LLMRetryError),
 
-        # Unexpected error
+        # Unrecognized errors should use the fallback domain exception.
         (InstructorError(), LLMUnknownError),
         (TypeError(), LLMUnknownError)
     ],
@@ -145,16 +154,15 @@ def test_llm_engine_map_litellm_exceptions(raw_exception, raised_exception):
     ]
 )
 def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
-    """Verify that Instructor retry failures and unexpected fallback errors map to domain exception types."""
+    """Verify retry-error mapping and fallback behavior for unrecognized exception types."""
     assert _map_exceptions(raw_exception) is raised_exception
-
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "raw_exception, raised_exception, should_wrap",
     [
-        # LiteLLM's errors
+        # Provider exceptions are wrapped to simulate the cause structure handled by the engine.
         (lite_exception(litellm.AuthenticationError), LLMAuthenticationError, True),
         (lite_exception(litellm.PermissionDeniedError, response=fake_response()), LLMAuthenticationError, True),
         (lite_exception(litellm.NotFoundError), LLMNotFoundError, True),
@@ -165,9 +173,11 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         (lite_exception(litellm.APIConnectionError), APIError, True),
         (lite_exception(litellm.APIError, status_code=500), APIError, True),
 
-        #Instructor's error
+        # Instructor exceptions are raised directly to test the engine's exception handler.
         (InstructorRetryException(n_attempts=3, total_usage=3), LLMRetryError, False),
         (InstructorError(), LLMUnknownError, False),
+
+        # A non-Instructor exception should propagate unchanged through llm_extract().
         (TypeError(), TypeError, False)
     ],
     ids=[
@@ -186,6 +196,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
     ]
 )
 async def test_llm_extract_exception_mapping(raw_exception, raised_exception, should_wrap):
+    """Verify exception translation during extraction and propagation of non-Instructor errors."""
     mock_request = ExtractionJobToLLM(
         content="This is an test parsed content cleaned from fetched HTML",
         prompt="Extract useful information",
@@ -193,17 +204,22 @@ async def test_llm_extract_exception_mapping(raw_exception, raised_exception, sh
         api_key="model-api-key",
         response_schema=LLMEngineMockResponseModel
     )
+
+    # Replace the client so the test exercises error handling without external API calls.
     with patch('graphcrawl_ai.llm.engine.Client') as MockClientClass:
         mock_client_instance = MockClientClass.return_value
 
         mock_create = AsyncMock()
         mock_client_instance.get_client.return_value.create = mock_create
 
-        
+        # Choose the exception structure explicitly for the scenario being tested.
         if should_wrap:
             mock_create.side_effect = wrap_instructor_error_cause(raw_exception)
         else:
             mock_create.side_effect = raw_exception
-    
+
+        # Verify that llm_extract() raises the expected domain exception,
+        # or propagates the original exception when it is not handled.
         with pytest.raises(raised_exception):
             await llm_extract(request=mock_request)
+```
