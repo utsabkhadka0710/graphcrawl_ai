@@ -222,4 +222,3 @@ async def test_llm_extract_exception_mapping(raw_exception, raised_exception, sh
         # or propagates the original exception when it is not handled.
         with pytest.raises(raised_exception):
             await llm_extract(request=mock_request)
-```
