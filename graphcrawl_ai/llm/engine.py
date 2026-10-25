@@ -1,3 +1,5 @@
+import litellm
+
 from pydantic import BaseModel
 from graphcrawl_ai.llm.client import Client
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
@@ -12,6 +14,7 @@ from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import(
     LLMRateLimitError,
     LLMUnavailableError,
     LLMContextWindowExceededError,
+    LLMNotFoundError,
     APIError,
     LLMUnknownError
 )
@@ -31,7 +34,6 @@ def _map_exceptions(exception: InstructorError):
     """
     cause = exception.__cause__
 
-    import litellm
     if isinstance(cause, (litellm.AuthenticationError,litellm.PermissionDeniedError)):
         return LLMAuthenticationError
     if isinstance(cause, litellm.Timeout):
