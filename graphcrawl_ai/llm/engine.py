@@ -2,6 +2,7 @@ import litellm
 
 from pydantic import BaseModel
 from graphcrawl_ai.llm.client import Client
+from graphcrawl_ai.llm.prompts import EXTRACTION_SYSTEM_PROMPT
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
 from instructor.core import (
     InstructorError,
@@ -91,8 +92,17 @@ async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
             num_retries=retry,
             max_retries=retry,
             messages=[
-                {'role':'system','content':prompt},
-                {'role':'user','content':content}
+                {
+                    "role": "system",
+                    "content": EXTRACTION_SYSTEM_PROMPT
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Extraction Task: \n{prompt}\n\n"
+                        f"Source Cotent: \n{content}"
+                    )
+                }
             ],
         )
     except InstructorError as e:

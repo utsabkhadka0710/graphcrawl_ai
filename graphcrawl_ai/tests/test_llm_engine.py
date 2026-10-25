@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 from graphcrawl_ai.llm.engine import llm_extract, _map_exceptions
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
+from graphcrawl_ai.llm.prompts import EXTRACTION_SYSTEM_PROMPT
 
 from instructor.core import InstructorError, InstructorRetryException
 from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import (
@@ -72,8 +73,17 @@ async def test_llm_extract_valid_request_forward_and_return_response():
             num_retries=2,
             max_retries=2,
             messages=[
-                {'role': 'system', 'content': 'Extract useful information'},
-                {'role': 'user', 'content': 'This is an test parsed content cleaned from fetched HTML'}
+                {
+                    "role": "system",
+                    "content": EXTRACTION_SYSTEM_PROMPT
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Extraction Task: \nExtract useful information\n\n"
+                        f"Source Cotent: \nThis is an test parsed content cleaned from fetched HTML"
+                    )
+                }
             ]
         )
 
