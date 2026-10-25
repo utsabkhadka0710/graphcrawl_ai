@@ -10,6 +10,7 @@ from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import Extract
 from instructor.core import InstructorError, InstructorRetryException
 from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import (
     LLMAuthenticationError,
+    LLMNotFoundError,
     LLMRetryError,
     LLMTimeoutError,
     LLMRateLimitError,
@@ -102,20 +103,24 @@ def fake_response() -> httpx.Response:
         # LiteLLM's errors
         (lite_exception(litellm.AuthenticationError), LLMAuthenticationError),
         (lite_exception(litellm.PermissionDeniedError, response=fake_response()), LLMAuthenticationError),
+        (lite_exception(litellm.NotFoundError), LLMNotFoundError),
         (lite_exception(litellm.Timeout), LLMTimeoutError),
         (lite_exception(litellm.RateLimitError), LLMRateLimitError),
         (lite_exception(litellm.ServiceUnavailableError), LLMUnavailableError),
         (lite_exception(litellm.ContextWindowExceededError), LLMContextWindowExceededError),
         (lite_exception(litellm.APIConnectionError), APIError),
+        (lite_exception(litellm.APIError, status_code=500), APIError)
     ],
     ids=[
         "authentication-error",
         "permission-denied-authentication-error",
+        "llm-not-found-error",
         "timeout-error",
         "rate-limit-error",
         "service-unavailable-error",
         "context-window-exceeded-error",
-        "api-connection-error"
+        "api-connection-error",
+        "api-error"
     ]
 )
 def test_llm_engine_map_litellm_exceptions(raw_exception, raised_exception):
