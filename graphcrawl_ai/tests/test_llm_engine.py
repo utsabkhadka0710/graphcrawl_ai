@@ -73,7 +73,7 @@ async def test_llm_extract_valid_request_forward_and_return_response():
 
 def wrap_instructor_error_cause(cause: Exception) -> InstructorError:
     """Wrap an underlying provider exception inside an InstructorError instance to mimic real runtime wrapper behavior."""
-    outer_exc = InstructorRetryException(n_attempts=3, total_usage=3)
+    outer_exc = InstructorError()
     outer_exc.__cause__ = cause
     return outer_exc
 
