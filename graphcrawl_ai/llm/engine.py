@@ -36,6 +36,8 @@ def _map_exceptions(exception: InstructorError):
 
     if isinstance(cause, (litellm.AuthenticationError,litellm.PermissionDeniedError)):
         return LLMAuthenticationError
+    if isinstance(cause, litellm.NotFoundError):
+        return LLMNotFoundError
     if isinstance(cause, litellm.Timeout):
         return LLMTimeoutError
     if isinstance(cause, litellm.RateLimitError):
@@ -94,6 +96,6 @@ async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
             ],
         )
     except InstructorError as e:
-        raise _map_exceptions(exception=e)(e)
+        raise _map_exceptions(exception=e)()
 
     return response
