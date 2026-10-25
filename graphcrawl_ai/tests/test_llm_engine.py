@@ -167,7 +167,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
     ids=[
         "extract-authentication-error",
         "extract-permission-denied-authentication-error",
-        "llm-not-found-error",
+        "extract-llm-not-found-error",
         "extract-timeout-error",
         "extract-rate-limit-error",
         "extract-service-unavailable-error",
