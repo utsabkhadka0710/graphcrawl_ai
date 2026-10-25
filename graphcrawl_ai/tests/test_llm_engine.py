@@ -32,7 +32,9 @@ async def test_llm_extract_valid_request_forward_and_return_response():
         prompt="Extract useful information",
         model="provider/model",
         api_key="model-api-key",
-        response_schema=LLMEngineMockResponseModel
+        response_schema=LLMEngineMockResponseModel,
+        llm_timeout=30,
+        llm_retry=2
     )
     with patch('graphcrawl_ai.llm.engine.Client') as MockClientClass:
         mock_client_instance = MockClientClass.return_value
@@ -59,9 +61,9 @@ async def test_llm_extract_valid_request_forward_and_return_response():
             model='provider/model',
             api_key='model-api-key',
             response_model=LLMEngineMockResponseModel,
-            timeout=60,
-            num_retries=3,
-            max_retries=3,
+            timeout=30,
+            num_retries=2,
+            max_retries=2,
             messages=[
                 {'role': 'system', 'content': 'Extract useful information'},
                 {'role': 'user', 'content': 'This is an test parsed content cleaned from fetched HTML'}
@@ -71,7 +73,7 @@ async def test_llm_extract_valid_request_forward_and_return_response():
 
 def wrap_instructor_error_cause(cause: Exception) -> InstructorError:
     """Wrap an underlying provider exception inside an InstructorError instance to mimic real runtime wrapper behavior."""
-    outer_exc = InstructorError()
+    outer_exc = InstructorRetryException(n_attempts=3, total_usage=3)
     outer_exc.__cause__ = cause
     return outer_exc
 
@@ -140,3 +142,47 @@ def test_llm_engine_map_litellm_exceptions(raw_exception, raised_exception):
 def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
     """Verify that Instructor retry failures and unexpected fallback errors map to domain exception types."""
     assert _map_exceptions(raw_exception) is raised_exception
+
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "raw_exception, raised_exception",
+    [
+        # LiteLLM's errors
+        (lite_exception(litellm.AuthenticationError), LLMAuthenticationError),
+        (lite_exception(litellm.PermissionDeniedError, response=fake_response()), LLMAuthenticationError),
+        (lite_exception(litellm.Timeout), LLMTimeoutError),
+        (lite_exception(litellm.RateLimitError), LLMRateLimitError),
+        (lite_exception(litellm.ServiceUnavailableError), LLMUnavailableError),
+        (lite_exception(litellm.ContextWindowExceededError), LLMContextWindowExceededError),
+        (lite_exception(litellm.APIConnectionError), APIError),
+    ],
+    ids=[
+        "extract-authentication-error",
+        "extract-permission-denied-authentication-error",
+        "extract-timeout-error",
+        "extract-rate-limit-error",
+        "extract-service-unavailable-error",
+        "extract-context-window-exceeded-error",
+        "extract-api-connection-error"
+    ]
+)
+async def test_llm_extract_exeption_mapping(raw_exception, raised_exception):
+    mock_request = ExtractionJobToLLM(
+        content="This is an test parsed content cleaned from fetched HTML",
+        prompt="Extract useful information",
+        model="provider/model",
+        api_key="model-api-key",
+        response_schema=LLMEngineMockResponseModel
+    )
+    with patch('graphcrawl_ai.llm.engine.Client') as MockClientClass:
+        mock_client_instance = MockClientClass.return_value
+
+        mock_create = AsyncMock()
+        mock_client_instance.get_client.return_value.create = mock_create
+
+        mock_create.side_effect = wrap_instructor_error_cause(raw_exception)
+
+        with pytest.raises(raised_exception):
+            await llm_extract(request=mock_request)
