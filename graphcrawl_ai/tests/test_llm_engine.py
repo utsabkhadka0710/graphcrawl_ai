@@ -163,6 +163,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         (lite_exception(litellm.ServiceUnavailableError), LLMUnavailableError, True),
         (lite_exception(litellm.ContextWindowExceededError), LLMContextWindowExceededError, True),
         (lite_exception(litellm.APIConnectionError), APIError, True),
+        (lite_exception(litellm.APIError, status_code=500), APIError, True),
 
         #Instructor's error
         (InstructorRetryException(n_attempts=3, total_usage=3), LLMRetryError, False),
@@ -177,6 +178,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         "extract-service-unavailable-error",
         "extract-context-window-exceeded-error",
         "extract-api-connection-error",
+        "extract-api-error",
         "extract-retry-error",
         "extract-unknown-error-from-instructor-error",
     ]
