@@ -163,6 +163,10 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         (lite_exception(litellm.ServiceUnavailableError), LLMUnavailableError),
         (lite_exception(litellm.ContextWindowExceededError), LLMContextWindowExceededError),
         (lite_exception(litellm.APIConnectionError), APIError),
+
+        #Instructor's error
+        (InstructorRetryException(n_attempts=3, total_usage=3), LLMRetryError),
+        (InstructorError(), LLMUnknownError),
     ],
     ids=[
         "extract-authentication-error",
@@ -172,7 +176,9 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         "extract-rate-limit-error",
         "extract-service-unavailable-error",
         "extract-context-window-exceeded-error",
-        "extract-api-connection-error"
+        "extract-api-connection-error",
+        "extract-retry-error",
+        "extract-unknown-error-from-instructor-error",
     ]
 )
 async def test_llm_extract_exeption_mapping(raw_exception, raised_exception):
@@ -189,7 +195,14 @@ async def test_llm_extract_exeption_mapping(raw_exception, raised_exception):
         mock_create = AsyncMock()
         mock_client_instance.get_client.return_value.create = mock_create
 
-        mock_create.side_effect = wrap_instructor_error_cause(raw_exception)
+        try:
+            if raw_exception.__module__ == "litellm.exceptions":
+                mock_create.side_effect = wrap_instructor_error_cause(raw_exception)
+            else:
+                mock_create.side_effect = raw_exception
+        except:
+                mock_create.side_effect = raw_exception
+
 
         with pytest.raises(raised_exception):
             await llm_extract(request=mock_request)
