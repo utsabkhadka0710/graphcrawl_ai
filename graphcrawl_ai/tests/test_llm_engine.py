@@ -185,7 +185,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         "extract-non-instructor-error"
     ]
 )
-async def test_llm_extract_exeption_mapping(raw_exception, raised_exception, should_wrap):
+async def test_llm_extract_exception_mapping(raw_exception, raised_exception, should_wrap):
     mock_request = ExtractionJobToLLM(
         content="This is an test parsed content cleaned from fetched HTML",
         prompt="Extract useful information",
