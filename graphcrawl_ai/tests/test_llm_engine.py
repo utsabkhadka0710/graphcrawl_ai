@@ -157,6 +157,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         # LiteLLM's errors
         (lite_exception(litellm.AuthenticationError), LLMAuthenticationError),
         (lite_exception(litellm.PermissionDeniedError, response=fake_response()), LLMAuthenticationError),
+        (lite_exception(litellm.NotFoundError), LLMNotFoundError),
         (lite_exception(litellm.Timeout), LLMTimeoutError),
         (lite_exception(litellm.RateLimitError), LLMRateLimitError),
         (lite_exception(litellm.ServiceUnavailableError), LLMUnavailableError),
@@ -166,6 +167,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
     ids=[
         "extract-authentication-error",
         "extract-permission-denied-authentication-error",
+        "llm-not-found-error",
         "extract-timeout-error",
         "extract-rate-limit-error",
         "extract-service-unavailable-error",
