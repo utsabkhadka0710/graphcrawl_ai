@@ -98,6 +98,20 @@ class LLMUnavailableError(LLMError):
             )
         super().__init__(message)
 
+class LLMNotFoundError(LLMError):
+    """The requested AI model or provider could not be found.
+
+    This error happens when the specified model name is incorrect, misspelled, 
+    deprecated, or unavailable under your current API provider account configuration.
+    """
+    __module__ = "graphcrawl_ai"
+    def __init__(self, message: str | None = None):
+        if message is None:
+            message = (
+                "Specified LLM model could not be found. Please check your provider/model configuration and try again."
+            )
+        super().__init__(message)
+
 class APIError(LLMError):
     """A general connection system issue happened on the provider's side.
 
