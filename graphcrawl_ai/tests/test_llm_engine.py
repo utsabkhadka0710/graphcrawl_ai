@@ -168,6 +168,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         #Instructor's error
         (InstructorRetryException(n_attempts=3, total_usage=3), LLMRetryError, False),
         (InstructorError(), LLMUnknownError, False),
+        (TypeError(), TypeError, False)
     ],
     ids=[
         "extract-authentication-error",
@@ -181,6 +182,7 @@ def test_llm_engine_map_non_litellm_exceptions(raw_exception, raised_exception):
         "extract-api-error",
         "extract-retry-error",
         "extract-unknown-error-from-instructor-error",
+        "extract-non-instructor-error"
     ]
 )
 async def test_llm_extract_exeption_mapping(raw_exception, raised_exception, should_wrap):
