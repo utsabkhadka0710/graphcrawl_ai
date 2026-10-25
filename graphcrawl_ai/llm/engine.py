@@ -42,12 +42,12 @@ def _map_exceptions(exception: InstructorError):
         return LLMRateLimitError
     if isinstance(cause, litellm.ContextWindowExceededError):
         return LLMContextWindowExceededError
-    if isinstance(exception, InstructorRetryException):
-        return LLMRetryError
     if isinstance(cause, litellm.ServiceUnavailableError):
         return LLMUnavailableError
     if isinstance(cause, (litellm.APIConnectionError, litellm.APIError)):
         return APIError
+    if isinstance(exception, InstructorRetryException):
+        return LLMRetryError
     return LLMUnknownError
 
 
@@ -94,6 +94,6 @@ async def llm_extract(request:ExtractionJobToLLM) -> BaseModel:
             ],
         )
     except InstructorError as e:
-        raise _map_exceptions(exception=e)()
+        raise _map_exceptions(exception=e)(e)
 
     return response
