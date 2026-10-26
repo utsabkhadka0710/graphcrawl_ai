@@ -16,6 +16,17 @@ from graphcrawl_ai.exceptions.extration.html_from_url_exceptions import(
     NetworkError,
     RetryTimeoutError
 )
+from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import(
+    LLMAuthenticationError,
+    LLMTimeoutError,
+    LLMRetryError,
+    LLMRateLimitError,
+    LLMContextWindowExceededError,
+    LLMUnavailableError,
+    LLMNotFoundError,
+    APIError,
+    LLMUnknownError
+)
 
 __all__ = [
     # Methods
@@ -24,10 +35,20 @@ __all__ = [
     #Exceptions
     "UrlMissingError",
     "PromptMissingError",
+    "ResponseSchemaMissingError",
     "InvalidDataError",
     "InvalidUrl",
     "HTTPStatusError",
     "ProtocolError",
     "NetworkError",
-    "RetryTimeoutError"
+    "RetryTimeoutError",
+    "LLMAuthenticationError",
+    "LLMTimeoutError",
+    "LLMRetryError",
+    "LLMRateLimitError",
+    "LLMContextWindowExceededError",
+    "LLMUnavailableError",
+    "LLMNotFoundError",
+    "APIError",
+    "LLMUnknownError"
 ]
