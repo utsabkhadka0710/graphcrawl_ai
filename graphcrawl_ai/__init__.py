@@ -8,6 +8,7 @@ from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import (
     CrawlError,
     UrlMissingError,
     PromptMissingError,
+    ResponseSchemaMissingError,
     InvalidDataError
 )
 from graphcrawl_ai.exceptions.extraction.html_from_url_exceptions import(
