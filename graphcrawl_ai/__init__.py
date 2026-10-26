@@ -9,7 +9,7 @@ from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import (
     PromptMissingError,
     InvalidDataError
 )
-from graphcrawl_ai.exceptions.extration.html_from_url_exceptions import(
+from graphcrawl_ai.exceptions.extraction.html_from_url_exceptions import(
     InvalidUrl,
     HTTPStatusError,
     ProtocolError,

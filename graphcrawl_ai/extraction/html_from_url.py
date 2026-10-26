@@ -1,6 +1,6 @@
 import httpx
 import logging
-from graphcrawl_ai.exceptions.extration.html_from_url_exceptions import(
+from graphcrawl_ai.exceptions.extraction.html_from_url_exceptions import(
     InvalidUrl,
     HTTPStatusError,
     ProtocolError,
