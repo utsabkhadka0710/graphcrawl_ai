@@ -350,39 +350,37 @@ All built-in responses extend `UrlBaseResponse`, which carries a `status` field.
 
 ## Error handling
 
-Errors fall into three groups: invalid input to `crawl_url()`, failures while fetching the page, and failures while talking to the LLM.
+Errors fall into three groups: invalid input to `crawl_url()`, failures while fetching the page, and failures while talking to the LLM. Every exception below is importable straight from `graphcrawl_ai`.
 
-| Exception | Raised when | Importable from `graphcrawl_ai` |
-|---|---|:---:|
-| `UrlMissingError` | `source` is missing or empty | ✅ |
-| `PromptMissingError` | Neither `prompt` nor `quick_option` was given | ✅ |
-| `InvalidDataError` | A parameter has an invalid value (check `.param_name`), including a missing `model` | ✅ |
-| `ResponseSchemaMissingError` | A custom `prompt` was given without a valid `response_schema` | ❌ |
-| `InvalidUrl` | The URL is malformed | ✅ |
-| `ProtocolError` | The URL lacks `http://` or `https://` | ✅ |
-| `HTTPStatusError` | The site returned an error status (4xx, or 5xx after retries) | ✅ |
-| `NetworkError` | A connection or DNS failure | ✅ |
-| `RetryTimeoutError` | The page kept timing out until retries ran out | ✅ |
-| `LLMAuthenticationError` | The provider rejected your API key | ❌ |
-| `LLMTimeoutError` | The LLM call timed out | ❌ |
-| `LLMRateLimitError` | The provider rate-limited the request | ❌ |
-| `LLMContextWindowExceededError` | The page text is too long for the model | ❌ |
-| `LLMRetryError` | Instructor ran out of retries before getting a valid reply | ❌ |
-| `LLMUnavailableError` | The provider is unavailable | ❌ |
-| `APIError` | A provider connection or API error | ❌ |
-| `LLMUnknownError` | Any other LLM failure | ❌ |
+Each group has a base class, so you can catch a whole group at once: `CrawlError` (input), `FetchError` (page fetching), and `LLMError` (LLM calls).
 
-Exceptions marked ❌ live in their own modules:
-
-- `graphcrawl_ai.exceptions.crawler.crawl_url_exceptions`
-- `graphcrawl_ai.exceptions.llm.llm_extractor_exceptions`
+| Exception | Group | Raised when |
+|---|---|---|
+| `UrlMissingError` | Input | `source` is missing or empty |
+| `PromptMissingError` | Input | Neither `prompt` nor `quick_option` was given |
+| `InvalidDataError` | Input | A parameter has an invalid value (check `.param_name`), including a missing `model` |
+| `ResponseSchemaMissingError` | Input | A custom `prompt` was given without a valid `response_schema` |
+| `InvalidUrl` | Fetch | The URL is malformed |
+| `ProtocolError` | Fetch | The URL lacks `http://` or `https://` |
+| `HTTPStatusError` | Fetch | The site returned an error status (4xx, or 5xx after retries) |
+| `NetworkError` | Fetch | A connection or DNS failure |
+| `RetryTimeoutError` | Fetch | The page kept timing out until retries ran out |
+| `LLMAuthenticationError` | LLM | The provider rejected your API key (or denied permission) |
+| `LLMNotFoundError` | LLM | The model name doesn't exist or isn't available to your account |
+| `LLMTimeoutError` | LLM | The LLM call timed out |
+| `LLMRateLimitError` | LLM | The provider rate-limited the request |
+| `LLMContextWindowExceededError` | LLM | The page text is too long for the model |
+| `LLMUnavailableError` | LLM | The provider is unavailable |
+| `APIError` | LLM | A provider connection or API error |
+| `LLMRetryError` | LLM | Instructor ran out of retries before getting a valid reply |
+| `LLMUnknownError` | LLM | Any other LLM failure |
 
 ```python
 from graphcrawl_ai import (
-    crawl_url, PromptMissingError, InvalidDataError, HTTPStatusError, RetryTimeoutError,
-)
-from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import (
-    LLMAuthenticationError, LLMContextWindowExceededError,
+    crawl_url,
+    PromptMissingError, InvalidDataError,
+    HTTPStatusError, RetryTimeoutError,
+    LLMAuthenticationError, LLMNotFoundError, LLMContextWindowExceededError,
 )
 
 try:
@@ -399,6 +397,8 @@ except (HTTPStatusError, RetryTimeoutError) as e:
     print(f"Could not load the page: {e}")
 except LLMAuthenticationError:
     print("Check your API key.")
+except LLMNotFoundError:
+    print("Check the model name.")
 except LLMContextWindowExceededError:
     print("This page is too long for the chosen model.")
 ```
@@ -431,10 +431,12 @@ graphcrawl_ai/
 ├── examples/
 │   ├── live_demo_example.py         # Custom prompt + schema, real network + LLM call
 │   └── basic_usage.py               # Empty placeholder
+├── assets/logo.png
 ├── .env.example
 ├── CONTRIBUTING.md
 ├── LICENSE
-└── pyproject.toml
+├── pyproject.toml
+└── requirements-lock.txt            # Pinned versions the project was tested with
 ```
 
 ## Development and testing
@@ -447,6 +449,25 @@ pytest graphcrawl_ai/tests/
 The suite covers input validation, HTML fetching (with mocked HTTP), content cleaning, LLM error mapping, and numeric coercion. The tests do not call any real website or LLM.
 
 `examples/live_demo_example.py` is separate. It makes real requests, which makes it useful as a manual smoke test against a live provider.
+
+### Updating the lock file
+
+If you add or upgrade a dependency, update `pyproject.toml` first, then regenerate [`requirements-lock.txt`](requirements-lock.txt) from a clean environment:
+
+```bash
+python3 -m venv .venv-lock && source .venv-lock/bin/activate
+pip install -e ".[dev]"
+pip freeze --exclude-editable > requirements-lock.txt
+pytest graphcrawl_ai/tests/
+```
+
+`pip freeze` drops platform markers, so re-add the one for `uvloop` afterwards (it has no Windows build):
+
+```
+uvloop==<version> ; sys_platform != "win32"
+```
+
+Confirm the tests still pass before committing the new lock file.
 
 ## REST API
 
@@ -463,10 +484,8 @@ GraphCrawl AI is early. Be aware of the following.
 - **Static HTML only.** Pages are fetched with a plain HTTP client, so content rendered by JavaScript after load will not be seen. Login-protected pages are not supported.
 - **No chunking.** The whole cleaned page is sent to the model. Very long pages can raise `LLMContextWindowExceededError`.
 - **Heuristic cleaning.** Cookie banners and navigation are removed by tag, role, and keyword rules. Plain-prose notices with no identifying class or id can slip through.
-- **`status` can't represent a policy violation.** The built-in prompts tell the model to return `"status": "error"` for content that violates safety policies, but `UrlBaseResponse.status` only allows `"success"` or `"failure"`.
 - **Custom prompts need a schema.** There is no automatic schema for a custom `prompt`.
 - **Limited provider verification.** See [Choosing a model](#choosing-a-model-and-setting-credentials).
-- **Some exceptions aren't exported from the package root.** Import `ResponseSchemaMissingError` and the LLM errors from their modules (see [Error handling](#error-handling)).
 - **Logging.** The fetcher configures `logging` at `INFO` level on import and logs each fetch attempt.
 - **Heavier install than needed.** FastAPI and Uvicorn are installed as core dependencies, even though the REST API is only a skeleton.
 - **Unfinished pieces.** `llm/config.py` is a stub that isn't used yet, and `examples/basic_usage.py` is empty.
@@ -485,7 +504,6 @@ Also remember that the cleaned page text is sent to the LLM provider you choose.
 
 Directions suggested by the current code, roughly in priority order:
 
-- [ ] Export all public exceptions from the package root
 - [ ] Write `examples/basic_usage.py`
 - [ ] Wire up real crawling endpoints in the REST API
 - [ ] Model fallbacks and configuration (`llm/config.py`)
