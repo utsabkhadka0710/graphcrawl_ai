@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 from bs4 import BeautifulSoup
 from graphcrawl_ai.extraction.text_from_html import (
     clean_structural_noise,

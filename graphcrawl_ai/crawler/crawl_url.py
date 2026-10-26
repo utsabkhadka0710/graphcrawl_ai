@@ -1,7 +1,7 @@
 from graphcrawl_ai.resolver.url_resolver import resolve_url_request
 from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, AvailableQuickOption
 from graphcrawl_ai.llm.engine import llm_extract
-from typing import Literal, Optional, TypeVar, get_args
+from typing import Optional, TypeVar
 from pydantic import BaseModel, ValidationError
 
 # Exceptions imports

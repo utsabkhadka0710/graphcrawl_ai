@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from abc import ABC
-from typing import Literal, Optional
+from typing import Literal
 
 
 class UrlBaseResponse(BaseModel, ABC):

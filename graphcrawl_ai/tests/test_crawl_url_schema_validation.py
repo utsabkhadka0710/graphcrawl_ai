@@ -1,6 +1,5 @@
 import pytest
 import httpx, respx
-import asyncio
 from graphcrawl_ai import crawl_url
 from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import ResponseSchemaMissingError
 

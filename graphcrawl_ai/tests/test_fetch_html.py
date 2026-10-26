@@ -1,6 +1,4 @@
-import asyncio
 import pytest
-import pytest_asyncio
 import respx, httpx
 
 from graphcrawl_ai.extraction.html_from_url import fetch_html
