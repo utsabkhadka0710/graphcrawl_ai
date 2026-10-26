@@ -1,4 +1,5 @@
 from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import(
+    LLMError,
     LLMAuthenticationError,
     LLMTimeoutError,
     LLMRetryError,
@@ -11,6 +12,7 @@ from graphcrawl_ai.exceptions.llm.llm_extractor_exceptions import(
 )
 
 __all__ = [
+    "LLMError",
     "LLMAuthenticationError",
     "LLMTimeoutError",
     "LLMRetryError",

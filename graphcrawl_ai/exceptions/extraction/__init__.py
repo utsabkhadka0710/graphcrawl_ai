@@ -1,4 +1,5 @@
 from graphcrawl_ai.exceptions.extraction.html_from_url_exceptions import(
+    FetchError,
     InvalidUrl,
     HTTPStatusError,
     ProtocolError,
@@ -7,6 +8,7 @@ from graphcrawl_ai.exceptions.extraction.html_from_url_exceptions import(
 )
 
 __all__ = [
+    "FetchError",
     "InvalidUrl",
     "HTTPStatusError",
     "ProtocolError",

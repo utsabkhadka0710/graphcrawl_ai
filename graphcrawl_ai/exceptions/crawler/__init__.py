@@ -1,4 +1,5 @@
 from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
+    CrawlError,
     UrlMissingError,
     PromptMissingError,
     ResponseSchemaMissingError,
@@ -6,6 +7,7 @@ from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
 )
 
 __all__ = [
+    "CrawlError",
     "UrlMissingError",
     "PromptMissingError",
     "ResponseSchemaMissingError",
