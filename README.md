@@ -485,7 +485,6 @@ Also remember that the cleaned page text is sent to the LLM provider you choose.
 
 Directions suggested by the current code, roughly in priority order:
 
-- [ ] Fix the `status` type so policy violations are representable
 - [ ] Export all public exceptions from the package root
 - [ ] Write `examples/basic_usage.py`
 - [ ] Wire up real crawling endpoints in the REST API
