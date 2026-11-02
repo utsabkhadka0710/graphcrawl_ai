@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional, Literal
 
 
+
 class QuickOption(str, Enum):
     """List of choices for quick information gathering."""
 
@@ -47,7 +48,8 @@ class UrlExtractionRequest(BaseModel):
 
     source: HttpUrl = Field(
         ...,
-        description="The link to the website you want to read."
+        description="The link to the website you want to read.",
+        strict=True
     )
     prompt: str | None = Field(
         None,
