@@ -1,8 +1,13 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 from enum import Enum
 from typing import Optional, Literal
 
-
+from graphcrawl_ai.llm.prompts import summary, contacts, products
+from graphcrawl_ai.models.crawl_url.response_models.llm_response import(
+    UrlSummaryResponse,
+    UrlContactsResponse,
+    UrlProductsResponse
+)
 
 class QuickOption(str, Enum):
     """List of choices for quick information gathering."""
@@ -87,3 +92,33 @@ class UrlExtractionRequest(BaseModel):
         3,
         description="How many times to try loading the webpage again if it fails."
     )
+
+      
+    @model_validator(mode='after')
+    def resolve_quick_option_and_prompt(self):
+        if not self.quick_option and not self.prompt:
+            raise ValueError(
+                "Either 'quick_option' or 'prompt' is needed but both are missing, "
+                "please select one of the availabe quick_option or provide a custom prompt."
+            )
+        if self.quick_option and not self.prompt:
+            match self.quick_option:
+                case QuickOption.SUMMARY:
+                    self.prompt = summary
+                    self.response_schema = UrlSummaryResponse
+                case QuickOption.CONTACTS:
+                    self.prompt = contacts
+                    self.response_schema = UrlContactsResponse
+                case QuickOption.PRODUCTS:
+                    self.prompt = products
+                    self.response_schema = UrlProductsResponse
+        if self.prompt:
+            if not self.response_schema:
+                raise ValueError(
+                    "'response_schema' missing! "
+                    "a custom prompt was given which requires custom response schema, "
+                    "please provide a 'response_shema' and try again."
+                )
+            self.prompt = self.prompt
+            self.response_schema = self.response_schema
+        return self
