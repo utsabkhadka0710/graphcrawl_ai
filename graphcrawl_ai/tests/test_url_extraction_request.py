@@ -79,7 +79,8 @@ def test_resolve_valid_quick_option_and_prompt(
         ("mock prompt", None, None),
         ("mock prompt", "summary", None),
         (None, None, None),
-        (None, None, MockResponseSchema)
+        (None, None, MockResponseSchema),
+        ("  ", None, MockResponseSchema)
     ],
     ids=[
         "int-prompt",
@@ -88,7 +89,8 @@ def test_resolve_valid_quick_option_and_prompt(
         "prompt-without-response_schema",
         "prompt-quick_option-no-response_schema",
         "no-prompt-no-quick_option-no-response_schema",
-        "no-prompt-no-quick_option-yes-response_schema"
+        "no-prompt-no-quick_option-yes-response_schema",
+        "whitespace-only-prompt-no-quick_option-yes-response_schema"
     ]
 ) 
 def test_resolve_invalid_quick_option_and_prompt(test_prompt, test_quick_option, test_response_schema):
