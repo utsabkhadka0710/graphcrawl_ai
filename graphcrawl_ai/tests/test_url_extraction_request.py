@@ -128,3 +128,37 @@ def test_invalid_source(malformed_url):
             quick_option="summary",
             model="foo/bar"
         )
+
+
+@pytest.mark.parametrize(
+    "invalid_model",
+    [
+        1,
+        3.14,
+        "  ",
+        None,
+        ['foo/bar']
+    ],
+    ids=[
+        "int-as-model",
+        "float-as-model",
+        "whitespace-as-model",
+        "none-as-model",
+        "list-as-model"
+    ]
+)
+def test_invalid_model(invalid_model):
+    with pytest.raises(ValidationError):
+        UrlExtractionRequest(
+            source="https://foo.bar",
+            prompt="Extract all the foo.",
+            quick_option="summary",
+            model=invalid_model,
+            api_key="xxxx-xxxx-xxxx-xxxx",
+            response_schema=MockResponseSchema,
+            llm_timeout=60,
+            llm_retry=4,
+            crawl_timeout=60,
+            crawl_retry=4
+        )
+

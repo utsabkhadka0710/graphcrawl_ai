@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl, model_validator
+from pydantic import BaseModel, Field, HttpUrl, model_validator, field_validator
 from enum import Enum
 from typing import Optional, Literal
 
@@ -93,7 +93,14 @@ class UrlExtractionRequest(BaseModel):
         description="How many times to try loading the webpage again if it fails."
     )
 
-      
+    @field_validator("model")
+    @classmethod
+    def validate_not_empty(cls, value: str):
+        if not value or not value.strip():
+            raise ValueError(f"'model' cannot be empty or whitespace only, please provide a valid model name!")
+        return value
+
+
     @model_validator(mode='after')
     def resolve_quick_option_and_prompt(self):
         if not self.quick_option and not self.prompt:
