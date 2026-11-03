@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl, model_validator, field_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
 from enum import Enum
 from typing import Optional, Literal
 
@@ -51,7 +51,7 @@ class UrlExtractionRequest(BaseModel):
 
     __module__ = "graphcrawl_ai"
 
-    source: HttpUrl = Field(
+    source: str = Field(
         ...,
         description="The link to the website you want to read.",
         strict=True
