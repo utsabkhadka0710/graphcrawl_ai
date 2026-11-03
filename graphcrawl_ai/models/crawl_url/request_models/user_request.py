@@ -120,6 +120,8 @@ class UrlExtractionRequest(BaseModel):
                     self.prompt = products
                     self.response_schema = UrlProductsResponse
         if self.prompt:
+            if not self.prompt.strip():
+                raise ValueError("'prompt' cannot be empty or whitespace only! please input valid prompt.S")
             if not self.response_schema:
                 raise ValueError(
                     "'response_schema' missing! "
