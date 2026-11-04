@@ -21,7 +21,7 @@ async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToL
         and validation template, ready to be sent directly to the AI engine.
     """
     
-    source = request.source
+    source = str(request.source) #This is type casted to str because 'source' is stored initally as 'pydantic.HttpUrl' but in 'fetch_html' httpx expects 'str' or 'httpx.URL'
     prompt = request.prompt
     quick_option = request.quick_option
     model = request.model
