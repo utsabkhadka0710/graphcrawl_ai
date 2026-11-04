@@ -67,6 +67,8 @@ class InvalidDataError(CrawlError):
     __module__ = "graphcrawl_ai"
     def __init__(self, param_name: str = "unknown", message: any = None):
         self.param_name = param_name
+        if param_name and message:
+            message = f"Invalid data provided for parameter '{param_name}'. {message}"
         if message is None:
-            message = f"Invalid data provided for parameter: '{param_name}'."
+            message = f"Invalid data provided for parameter '{param_name}', please check the type of '{param_name}'"
         super().__init__(message)
