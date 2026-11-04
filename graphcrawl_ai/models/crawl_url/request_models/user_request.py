@@ -83,21 +83,25 @@ class UrlExtractionRequest(BaseModel):
     llm_timeout: float = Field(
         30,
         gt=0,
+        allow_inf_nan=False,
         description="How many seconds to wait for the AI to answer."
     )
     llm_retry: int = Field(
         3,
         ge=0,
+        allow_inf_nan=False,
         description="How many times to try asking the AI again if it fails.",
     )
     crawl_timeout: float = Field(
         30,
         gt=0,
+        allow_inf_nan=False,
         description="How many seconds to wait for the webpage to load."
     )
     crawl_retry: int = Field(
         3,
         ge=0,
+        allow_inf_nan=False,
         description="How many times to try loading the webpage again if it fails."
     )
 
