@@ -1,13 +1,9 @@
 from graphcrawl_ai.llm import prompts
 from graphcrawl_ai.extraction.html_from_url import fetch_html
 from graphcrawl_ai.extraction.text_from_html import extract_content_from_html
-from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest, QuickOption
+from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest
 from graphcrawl_ai.models.crawl_url.request_models.request_to_llm import ExtractionJobToLLM
-from graphcrawl_ai.models.crawl_url.response_models.llm_response import (
-    UrlSummaryResponse,
-    UrlContactsResponse,
-    UrlProductsResponse
-)
+
 
 async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToLLM:
     """Download website text and bundle it with the correct AI instructions and settings.
@@ -36,35 +32,19 @@ async def resolve_url_request(request: UrlExtractionRequest) -> ExtractionJobToL
     crawl_timeout = request.crawl_timeout
     crawl_retry = request.crawl_retry
 
-    if quick_option and not prompt:
-        match quick_option:
-            case QuickOption.SUMMARY:
-                prompt = prompts.summary
-                response_schema = UrlSummaryResponse
-
-            case QuickOption.CONTACTS:
-                prompt = prompts.contacts
-                response_schema = UrlContactsResponse
-
-            case QuickOption.PRODUCTS:
-                prompt = prompts.products
-                response_schema = UrlProductsResponse
     
     raw_html = await fetch_html(url=source,crawl_timeout=crawl_timeout, crawl_retry=crawl_retry)
     clean_content = extract_content_from_html(html_content=raw_html)
     
-    # Fallback to user-defined schema explicitly if provided
-    if request.response_schema is not None:
-        response_schema = request.response_schema
 
     request_to_llm = ExtractionJobToLLM(
-        content = clean_content,
-        prompt = prompt,
-        model = model,
-        api_key = api_key,
-        response_schema = response_schema,
-        llm_timeout = llm_timeout,
-        llm_retry = llm_retry
+        content=clean_content,
+        prompt=prompt,
+        model=model,
+        api_key=api_key,
+        response_schema=response_schema,
+        llm_timeout=llm_timeout,
+        llm_retry=llm_retry
     )
 
     return request_to_llm
