@@ -28,7 +28,7 @@ def test_valid_input():
         crawl_retry=4
     )
 
-    assert request.source == "https://foo.bar"
+    assert request.source == HttpUrl("https://foo.bar")
     assert request.prompt == "Extract all the foo."
     assert request.quick_option == "summary"
     assert request.model == "foo/bar"
