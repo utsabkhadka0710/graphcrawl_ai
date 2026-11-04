@@ -4,6 +4,11 @@ from pydantic import BaseModel, HttpUrl, ValidationError
 from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest
 from graphcrawl_ai.models.crawl_url.response_models.llm_response import UrlSummaryResponse
 from graphcrawl_ai.llm.prompts import summary
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
+    UrlMissingError,
+    PromptMissingError,
+    ResponseSchemaMissingError
+)
 
 class MockResponseSchema(BaseModel):
     foo: str
@@ -23,7 +28,7 @@ def test_valid_input():
         crawl_retry=4
     )
 
-    assert request.source == HttpUrl("https://foo.bar")
+    assert request.source == "https://foo.bar"
     assert request.prompt == "Extract all the foo."
     assert request.quick_option == "summary"
     assert request.model == "foo/bar"
@@ -71,17 +76,17 @@ def test_resolve_valid_quick_option_and_prompt(
 
 
 @pytest.mark.parametrize(
-    "test_prompt, test_quick_option, test_response_schema",
+    "test_prompt, test_quick_option, test_response_schema, raised_exception",
     [
-        (1, None, MockResponseSchema),
-        (None, 1, None),
-        (None, "invalid", None),
-        ("mock prompt", None, None),
-        ("mock prompt", "summary", None),
-        (None, None, None),
-        (None, None, MockResponseSchema),
-        ("  ", None, MockResponseSchema),
-        ("", None, MockResponseSchema)
+        (1, None, MockResponseSchema, ValidationError),
+        (None, 1, None, ValidationError),
+        (None, "invalid", None, ValidationError),
+        ("mock prompt", None, None, ResponseSchemaMissingError),
+        ("mock prompt", "summary", None, ResponseSchemaMissingError),
+        (None, None, None, PromptMissingError),
+        (None, None, MockResponseSchema, PromptMissingError),
+        ("  ", None, MockResponseSchema, PromptMissingError),
+        ("", None, MockResponseSchema, PromptMissingError)
     ],
     ids=[
         "int-prompt",
@@ -95,8 +100,13 @@ def test_resolve_valid_quick_option_and_prompt(
         "none-string-prompt-"
     ]
 ) 
-def test_resolve_invalid_quick_option_and_prompt(test_prompt, test_quick_option, test_response_schema):
-    with pytest.raises(ValidationError):
+def test_resolve_invalid_quick_option_and_prompt(
+    test_prompt,
+    test_quick_option,
+    test_response_schema,
+    raised_exception
+):
+    with pytest.raises(raised_exception):
         UrlExtractionRequest(
             source="https://foo.bar",
             prompt=test_prompt,
@@ -108,27 +118,24 @@ def test_resolve_invalid_quick_option_and_prompt(test_prompt, test_quick_option,
 
 
 @pytest.mark.parametrize(
-    "malformed_url",
+    "url, raised_exception",
     [
-        "example.com",
-        "htt://example.com",
-        "https:/example.com",
-        "https:example.com",
-        "http//example.com",
-        "https://",
-        "://example.com",
-        "://",
-        "https://example:foo",
-        "https://foo:example.com",
-        "https://example.com\n",
-        "https://example.com\x1f",
-        "https://[example].com",
+        ("", UrlMissingError),
+        ("  ", UrlMissingError),
+        (None, UrlMissingError),
+        (["https://foo.bar"], ValidationError)
+    ],
+    ids=[
+        "empty-string-as-source",
+        "white-space-as-source",
+        "none-as-source",
+        "list-as-source"
     ]
 )
-def test_invalid_source(malformed_url):
-    with pytest.raises(ValidationError):
+def test_invalid_source(url, raised_exception):
+    with pytest.raises(raised_exception):
         UrlExtractionRequest(
-            source=malformed_url,
+            source=url,
             quick_option="summary",
             model="foo/bar"
         )
@@ -166,3 +173,71 @@ def test_invalid_model(invalid_model):
             crawl_retry=4
         )
 
+
+def make_extraction_model_for_timeout_and_retry(
+    crawl_timeout,
+    crawl_retry,
+    llm_timeout,
+    llm_retry
+):
+    return UrlExtractionRequest(
+        source="https://foo.bar",
+        prompt="Extract all the foo.",
+        quick_option="summary",
+        model="foo/bar",
+        api_key="xxxx-xxxx-xxxx-xxxx",
+        response_schema=MockResponseSchema,
+        llm_timeout=llm_timeout,
+        llm_retry=llm_retry,
+        crawl_timeout=crawl_timeout,
+        crawl_retry=crawl_retry
+    )
+
+@pytest.mark.parametrize(
+    "test_crawl_timeout, test_crawl_retry, test_llm_timeout, test_llm_retry",
+    [
+        (0, 4, 60, 4),
+        (-1, 4, 60, 4),
+        (60, -1, 60, 4),
+        (60, 4, 0, 4),
+        (60, 4, -1, 4),
+        (60, 4, 60, -1),
+        ('g', 4, 60, 4),
+        (60, 'g', 60, 4),
+        (60, 4, 'g', 4),
+        (60, 4, 60, 'g'),
+        ([60], 4, 60, 4),
+        (60, [4], 60, 4),
+        (60, 4, [60], 4),
+        (60, 4, 60, [4])
+    ],
+    ids=[
+        "zero-crawl-timeout",
+        "negative-crawl-timeout",
+        "negative-crawl-retry",
+        "zero-llm-timeout",
+        "negative-llm-timeout",
+        "negative-llm-retry",
+        "string-as-crawl-timeout",
+        "string-as-crawl-retry",
+        "string-as-llm-timeout",
+        "string-as-llm-retry",
+        "list-as-crawl-timeout",
+        "list-as-crawl-retry",
+        "list-as-llm-timeout",
+        "list-as-llm-retry",
+    ]
+)
+def test_invalid_crawl_timeout(
+    test_crawl_timeout,
+    test_crawl_retry,
+    test_llm_timeout,
+    test_llm_retry
+):
+    with pytest.raises(ValidationError):
+        make_extraction_model_for_timeout_and_retry(
+            crawl_timeout=test_crawl_timeout,
+            crawl_retry=test_crawl_retry,
+            llm_timeout=test_llm_timeout,
+            llm_retry=test_llm_retry
+        )
