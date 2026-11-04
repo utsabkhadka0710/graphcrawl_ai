@@ -8,6 +8,11 @@ from graphcrawl_ai.models.crawl_url.response_models.llm_response import(
     UrlContactsResponse,
     UrlProductsResponse
 )
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
+    UrlMissingError,
+    PromptMissingError,
+    ResponseSchemaMissingError
+)
 
 class QuickOption(str, Enum):
     """List of choices for quick information gathering."""
@@ -53,8 +58,7 @@ class UrlExtractionRequest(BaseModel):
 
     source: str = Field(
         ...,
-        description="The link to the website you want to read.",
-        strict=True
+        description="The link to the website you want to read."
     )
     prompt: str | None = Field(
         None,
@@ -76,38 +80,60 @@ class UrlExtractionRequest(BaseModel):
         None,
         description="A custom format provided by the user to organize the final output."
     )
-    llm_timeout: Optional[int] = Field(
+    llm_timeout: Optional[float] = Field(
         30,
+        gt=0,
         description="How many seconds to wait for the AI to answer."
     )
     llm_retry: Optional[int] = Field(
         3,
-        description="How many times to try asking the AI again if it fails."
+        ge=0,
+        description="How many times to try asking the AI again if it fails.",
     )
-    crawl_timeout: Optional[int] = Field(
+    crawl_timeout: Optional[float] = Field(
         30,
+        gt=0,
         description="How many seconds to wait for the webpage to load."
     )
     crawl_retry: Optional[int] = Field(
         3,
+        ge=0,
         description="How many times to try loading the webpage again if it fails."
     )
 
+    @field_validator("source", mode="before")
+    @classmethod
+    def validate_non_empty_source(cls, value: str):
+        if not value or (isinstance(value, str) and not value.strip()):
+            raise UrlMissingError
+        return value
+
     @field_validator("model")
     @classmethod
-    def validate_not_empty(cls, value: str):
+    def validate_non_empty_model(cls, value: str):
         if not value or not value.strip():
             raise ValueError(f"'model' cannot be empty or whitespace only, please provide a valid model name!")
         return value
 
-
+    @model_validator(mode="before")
+    @classmethod
+    def validate_non_empty_response_schema(cls, data: dict):
+        if not isinstance(data, dict):
+            return data
+        quick_option = data.get("quick_option")
+        prompt = data.get("prompt")
+        response_schema = data.get("response_schema")
+        if quick_option and not prompt:
+            return data
+        elif prompt:
+            if not response_schema or not isinstance(response_schema, type):
+                raise ResponseSchemaMissingError
+        return data
+    
     @model_validator(mode='after')
     def resolve_quick_option_and_prompt(self):
         if not self.quick_option and not self.prompt:
-            raise ValueError(
-                "Either 'quick_option' or 'prompt' is needed but both are missing, "
-                "please select one of the availabe quick_option or provide a custom prompt."
-            )
+            raise PromptMissingError
         if self.quick_option and not self.prompt:
             match self.quick_option:
                 case QuickOption.SUMMARY:
@@ -121,13 +147,7 @@ class UrlExtractionRequest(BaseModel):
                     self.response_schema = UrlProductsResponse
         if self.prompt:
             if not self.prompt.strip():
-                raise ValueError("'prompt' cannot be empty or whitespace only! please input valid prompt.S")
-            if not self.response_schema:
-                raise ValueError(
-                    "'response_schema' missing! "
-                    "a custom prompt was given which requires custom response schema, "
-                    "please provide a 'response_shema' and try again."
-                )
-            self.prompt = self.prompt
-            self.response_schema = self.response_schema
+                raise PromptMissingError
         return self
+
+    
