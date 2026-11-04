@@ -15,12 +15,12 @@ async def crawl_url(
     prompt: str | None = None, 
     quick_option: AvailableQuickOption | None = None,
     model: str | None = None,
-    api_key: str | None = None,
+    api_key: Optional[str] = None,
     response_schema: type[BaseModel] | None = None,
-    llm_timeout: Optional[float] = 60,
-    llm_retry: Optional[float] = 3,
-    crawl_timeout: Optional[float] = 30, 
-    crawl_retry: Optional[float] = 3
+    llm_timeout: float = 60,
+    llm_retry: float = 3,
+    crawl_timeout: float = 30, 
+    crawl_retry: float = 3
 ) -> CrawlUrlResponse:
     """Read a webpage and pull out specific information using an AI model.
 
