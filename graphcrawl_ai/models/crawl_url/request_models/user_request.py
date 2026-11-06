@@ -84,31 +84,35 @@ class UrlExtractionRequest(BaseModel):
         30,
         gt=0,
         allow_inf_nan=False,
+        strict=True,
         description="How many seconds to wait for the AI to answer."
     )
     llm_retry: int = Field(
         3,
         ge=0,
         allow_inf_nan=False,
+        strict=True,
         description="How many times to try asking the AI again if it fails.",
     )
     crawl_timeout: float = Field(
         30,
         gt=0,
         allow_inf_nan=False,
+        strict=True,
         description="How many seconds to wait for the webpage to load."
     )
     crawl_retry: int = Field(
         3,
         ge=0,
         allow_inf_nan=False,
+        strict=True,
         description="How many times to try loading the webpage again if it fails."
     )
 
     @field_validator("source", mode="before")
     @classmethod
     def validate_non_empty_source(cls, value: str):
-        if not value or (isinstance(value, str) and not value.strip()):
+        if value is None or (isinstance(value, str) and not value.strip()):
             raise UrlMissingError
         return value
 
@@ -121,7 +125,7 @@ class UrlExtractionRequest(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_non_empty_response_schema(cls, data: dict):
+    def validate_non_empty_prompt_and_response_schema(cls, data: dict):
         if not isinstance(data, dict):
             return data
         quick_option = data.get("quick_option")
@@ -129,8 +133,10 @@ class UrlExtractionRequest(BaseModel):
         response_schema = data.get("response_schema")
         if quick_option and not prompt:
             return data
-        elif prompt:
-            if not response_schema or not isinstance(response_schema, type):
+        if isinstance(prompt, str):
+            if not prompt.strip():
+                raise PromptMissingError
+            if response_schema is None:
                 raise ResponseSchemaMissingError
         return data
     
@@ -149,9 +155,6 @@ class UrlExtractionRequest(BaseModel):
                 case QuickOption.PRODUCTS:
                     self.prompt = products
                     self.response_schema = UrlProductsResponse
-        if self.prompt:
-            if not self.prompt.strip():
-                raise PromptMissingError
         return self
 
     
