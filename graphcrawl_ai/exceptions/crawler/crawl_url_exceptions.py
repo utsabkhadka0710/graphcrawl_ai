@@ -48,7 +48,7 @@ class ResponseSchemaMissingError(CrawlError):
     forget to include a valid Pydantic template model to guide the layout of the AI's response.
     """
     __module__ = "graphcrawl_ai"
-    def __init__(self, message:any = None):
+    def __init__(self, message: any = None):
         if message is None:
             message = (
                 f"The 'response_schema' is missing/empty or invalid schema provided. "
