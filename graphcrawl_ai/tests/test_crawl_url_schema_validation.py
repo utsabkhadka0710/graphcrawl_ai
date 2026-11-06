@@ -2,7 +2,7 @@ import pytest
 import httpx, respx
 from unittest.mock import patch, AsyncMock
 from graphcrawl_ai import crawl_url
-from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import ResponseSchemaMissingError
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import ResponseSchemaMissingError, InvalidDataError
 
 
 from pydantic import BaseModel
@@ -38,30 +38,30 @@ async def test_valid_schema():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "schema",
+    "schema, raised_exception",
     [
-        "abc",
-        123,
-        12.3,
-        [2,"summary"],
-        ("summary",1),
-        {"response":"summary"},
-        {3, "summary"},
-        None,
-        True
+        ("abc", InvalidDataError),
+        (123, InvalidDataError),
+        (12.3, InvalidDataError),
+        ([2,"summary"], InvalidDataError),
+        (("summary",1), InvalidDataError),
+        ({"response":"summary"}, InvalidDataError),
+        ({3, "summary"}, InvalidDataError),
+        (None, ResponseSchemaMissingError),
+        (True, InvalidDataError)
     ],
     ids = ["string-as-schema", "int-as-schema", "float-as-schema",
            "list-as-schema","tuple-as-schema", "dict-as-schema",
            "set-as-schema", "none-as-schema", "bool-as-schema"]
 )
-async def test_invalid_schema(schema, respx_mock):
+async def test_invalid_schema(schema, raised_exception, respx_mock):
     respx_mock.get(url="https://graphcrawl.ai").mock(
         return_value=httpx.Response(
             status_code=200,
             text="<p>GraphCrawlAI is an AI powered Python web scraper/crawler which is heavily under work rn."
         )
     )
-    with pytest.raises(ResponseSchemaMissingError):
+    with pytest.raises(raised_exception):
         await crawl_url(
             source="https://graphcrawl.ai",
             prompt="Extract summary form this page",
