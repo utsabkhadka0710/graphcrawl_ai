@@ -45,7 +45,7 @@ def test_valid_input():
         (None, "summary", None, summary, UrlSummaryResponse),
         (None, "summary", MockResponseSchema, summary, UrlSummaryResponse),
         ("mock prompt", None, MockResponseSchema, "mock prompt", MockResponseSchema),
-        ("mock prompt", "summary", MockResponseSchema, "mock prompt", MockResponseSchema)
+        ("mock prompt", "summary", MockResponseSchema, "mock prompt", MockResponseSchema),
     ],
     ids=[
         "quick_option-only",
@@ -79,25 +79,64 @@ def test_resolve_valid_quick_option_and_prompt(
     "test_prompt, test_quick_option, test_response_schema, raised_exception",
     [
         (1, None, MockResponseSchema, ValidationError),
+        (3.14, None, MockResponseSchema, ValidationError),
         (None, 1, None, ValidationError),
+        (None, 3.14, None, ValidationError),
         (None, "invalid", None, ValidationError),
         ("mock prompt", None, None, ResponseSchemaMissingError),
         ("mock prompt", "summary", None, ResponseSchemaMissingError),
+        ("mock prompt", "invalid", None, ResponseSchemaMissingError),
+        ("mock prompt", "invalid", MockResponseSchema, ValidationError),
         (None, None, None, PromptMissingError),
         (None, None, MockResponseSchema, PromptMissingError),
+        ("", None, MockResponseSchema, PromptMissingError),
+        ("", None, None, PromptMissingError),
         ("  ", None, MockResponseSchema, PromptMissingError),
-        ("", None, MockResponseSchema, PromptMissingError)
+        ("  ", None, None, PromptMissingError),
+        (True, None, MockResponseSchema, ValidationError),
+        (False, None, MockResponseSchema, ValidationError),
+        (True, None, None, ValidationError),
+        (False, None, None, ValidationError),
+        (True, "summary", MockResponseSchema, ValidationError),
+        (False, "summary", MockResponseSchema, ValidationError),
+        (True, "summary", None, ValidationError),
+        (False, "summary", None, ValidationError),
+        ("mock_prompt", True, None, ResponseSchemaMissingError),
+        ("mock_prompt", False, None, ResponseSchemaMissingError),
+        ("mock_prompt", True, MockResponseSchema, ValidationError),
+        ("mock_prompt", False, MockResponseSchema, ValidationError),
+        ("mock_prompt", None, int, ValidationError),
     ],
     ids=[
         "int-prompt",
+        "float-prompt",
         "int-quick_option",
+        "float-quick_option",
         "invalid-quick_option",
         "prompt-without-response_schema",
         "prompt-quick_option-no-response_schema",
+        "prompt-invalid-quick_option-no-response_schema",
+        "prompt-invalid-quick_option-yes-response_schema",
         "no-prompt-no-quick_option-no-response_schema",
         "no-prompt-no-quick_option-yes-response_schema",
+        "empty-string-prompt-no-quick_option-yes-response_schema",
+        "empty-string-prompt-no-quick_option-no-response_schema",
         "whitespace-only-prompt-no-quick_option-yes-response_schema",
-        "none-string-prompt-"
+        "whitespace-only-prompt-no-quick_option-no-response_schema",
+        "bool-true-prompt-no-quick_option-yes-response_schema",
+        "bool-false-prompt-no-quick_option-yes-response_schema",
+        "bool-true-prompt-no-quick_option-no-response_schema",
+        "bool-false-prompt-no-quick_option-no-response_schema",
+        "bool-true-prompt-yes-quick_option-yes-response_schema",
+        "bool-false-prompt-yes-quick_option-yes-response_schema",
+        "bool-true-prompt-yes-quick_option-no-response_schema",
+        "bool-false-prompt-yes-quick_option-no-response_schema",
+        "prompt-bool-true-quick_option-no-response_schema",
+        "prompt-bool-false-quick_option-no-response_schema",
+        "prompt-bool-true-quick_option-yes-response_schema",
+        "prompt-bool-false-quick_option-yes-response_schema",
+        "prompt-and-int-type-as-response_schema"
+
     ]
 ) 
 def test_resolve_invalid_quick_option_and_prompt(
@@ -106,7 +145,7 @@ def test_resolve_invalid_quick_option_and_prompt(
     test_response_schema,
     raised_exception
 ):
-    with pytest.raises(raised_exception):
+    with pytest.raises(raised_exception) as exc_info:
         UrlExtractionRequest(
             source="https://foo.bar",
             prompt=test_prompt,
@@ -115,6 +154,9 @@ def test_resolve_invalid_quick_option_and_prompt(
             api_key="xxxx-xxxx-xxxx-xxxx",
             response_schema=test_response_schema,
         )
+        assert exc_info.value.errors() == "hello"
+    if raised_exception is  ValidationError:
+        assert ValidationError
 
 
 @pytest.mark.parametrize(
@@ -209,7 +251,28 @@ def make_extraction_model_for_timeout_and_retry(
         ([60], 4, 60, 4),
         (60, [4], 60, 4),
         (60, 4, [60], 4),
-        (60, 4, 60, [4])
+        (60, 4, 60, [4]),
+        (float('inf'), 4, 60, 4),
+        (60, float('inf'), 60, 4),
+        (60, 4, float('inf'), 4),
+        (60, 4, 60, float('inf')),
+        (float('nan'), 4, 60, 4),
+        (60, float('nan'), 60, 4),
+        (60, 4, float('nan'), 4),
+        (60, 4, 60, float('nan')),
+        (True, 4, 60, 4),
+        (60, True, 60, 4),
+        (60, 4, True, 4),
+        (60, 4, 60, True),
+        (False, 4, 60, 4),
+        (60, False, 60, 4),
+        (60, 4, False, 4),
+        (60, 4, 60, False),
+        (None, 4, 60, 4),
+        (60, None, 60, 4),
+        (60, 4, None, 4),
+        (60, 4, 60, None),
+
     ],
     ids=[
         "zero-crawl-timeout",
@@ -226,6 +289,26 @@ def make_extraction_model_for_timeout_and_retry(
         "list-as-crawl-retry",
         "list-as-llm-timeout",
         "list-as-llm-retry",
+        "inf-as-crawl-timeout",
+        "inf-as-crawl-retry",
+        "inf-as-llm-timeout",
+        "inf-as-llm-retry",
+        "nan-as-crawl-timeout",
+        "nan-as-crawl-retry",
+        "nan-as-llm-timeout",
+        "nan-as-llm-retry",
+        "true-as-crawl-timeout",
+        "true-as-crawl-retry",
+        "true-as-llm-timeout",
+        "true-as-llm-retry",
+        "false-as-crawl-timeout",
+        "false-as-crawl-retry",
+        "false-as-llm-timeout",
+        "false-as-llm-retry",
+        "none-as-crawl-timeout",
+        "none-as-crawl-retry",
+        "none-as-llm-timeout",
+        "none-as-llm-retry",
     ]
 )
 def test_invalid_crawl_timeout(
