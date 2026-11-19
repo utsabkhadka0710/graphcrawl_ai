@@ -73,8 +73,15 @@ async def crawl_url(
             crawl_timeout=crawl_timeout,
             crawl_retry=crawl_retry,
         )
-    except UrlMissingError or PromptMissingError or ResponseSchemaMissingError as exc:
+    except UrlMissingError as exc:
         raise
+
+    except PromptMissingError as exc:
+        raise
+
+    except ResponseSchemaMissingError as exc:
+        raise
+
     except ValidationError as e:
         err_msg = e.errors()
         failed_param = err_msg[0]["loc"][0]
