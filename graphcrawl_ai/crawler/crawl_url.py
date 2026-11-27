@@ -5,7 +5,13 @@ from typing import Optional, TypeVar
 from pydantic import BaseModel, ValidationError
 
 # Exceptions imports
-from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import InvalidDataError
+from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
+    UrlMissingError,
+    PromptMissingError,
+    ResponseSchemaMissingError,
+    InvalidDataError
+
+)
 
 
 CrawlUrlResponse = TypeVar("ResponseSchema",bound=BaseModel)
@@ -67,11 +73,21 @@ async def crawl_url(
             crawl_timeout=crawl_timeout,
             crawl_retry=crawl_retry,
         )
+    except UrlMissingError as exc:
+        raise
+
+    except PromptMissingError as exc:
+        raise
+
+    except ResponseSchemaMissingError as exc:
+        raise
+
     except ValidationError as e:
         err_msg = e.errors()
         failed_param = err_msg[0]["loc"][0]
         failed_msg = err_msg[0]["msg"]
-        raise InvalidDataError(param_name=failed_param, message=failed_msg)
+        raise InvalidDataError(param_name=failed_param, message=failed_msg) from e
+
     
     request_to_llm = await resolve_url_request(request=request_by_user)
     

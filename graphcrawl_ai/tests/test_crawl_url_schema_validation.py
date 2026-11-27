@@ -47,7 +47,7 @@ async def test_valid_schema():
         (("summary",1), InvalidDataError),
         ({"response":"summary"}, InvalidDataError),
         ({3, "summary"}, InvalidDataError),
-        (None, ResponseSchemaMissingError),
+        (None, InvalidDataError),
         (True, InvalidDataError)
     ],
     ids = ["string-as-schema", "int-as-schema", "float-as-schema",

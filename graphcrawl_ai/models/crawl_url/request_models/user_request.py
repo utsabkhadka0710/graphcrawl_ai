@@ -1,17 +1,13 @@
-from pydantic import BaseModel, HttpUrl, Field, model_validator, field_validator
+from pydantic import BaseModel, HttpUrl, Field, model_validator, field_validator, ValidationError
+from pydantic_core import InitErrorDetails
 from enum import Enum
-from typing import Optional, Literal
+from typing import Optional, Literal, Any
 
 from graphcrawl_ai.llm.prompts import summary, contacts, products
 from graphcrawl_ai.models.crawl_url.response_models.llm_response import(
     UrlSummaryResponse,
     UrlContactsResponse,
     UrlProductsResponse
-)
-from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
-    UrlMissingError,
-    PromptMissingError,
-    ResponseSchemaMissingError
 )
 
 class QuickOption(str, Enum):
@@ -111,39 +107,105 @@ class UrlExtractionRequest(BaseModel):
 
     @field_validator("source", mode="before")
     @classmethod
-    def validate_non_empty_source(cls, value: str):
+    def validate_non_empty_source(cls, value: str) -> str:
         if value is None or (isinstance(value, str) and not value.strip()):
-            raise UrlMissingError
+            raise ValueError("'source' cannot be empty or whitespace only, please proved a valid url!")
         return value
 
-    @field_validator("model")
+    @field_validator("model", mode="before")
     @classmethod
-    def validate_non_empty_model(cls, value: str):
-        if not value or not value.strip():
-            raise ValueError(f"'model' cannot be empty or whitespace only, please provide a valid model name!")
+    def validate_non_empty_model(cls, value: str) -> str:
+        if value is None or (isinstance(value, str) and not value.strip()):
+            raise ValueError("'model' cannot be empty or whitespace only, please provide a valid model name!")
         return value
 
-    @model_validator(mode="before")
+    @field_validator("prompt", mode="after")
     @classmethod
-    def validate_non_empty_prompt_and_response_schema(cls, data: dict):
-        if not isinstance(data, dict):
-            return data
-        quick_option = data.get("quick_option")
-        prompt = data.get("prompt")
-        response_schema = data.get("response_schema")
-        if quick_option and not prompt:
-            return data
-        if isinstance(prompt, str):
-            if not prompt.strip():
-                raise PromptMissingError
+    def validate_non_empty_prompt(cls, value: str | None) -> str | None:
+        if isinstance(value, str) and not value.strip():
+            raise ValueError("'prompt' cannot be empty or whitespace only, please provide a valid prompt!")
+        return value
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def validate_response_schema(cls, value: dict, handler):
+        if not isinstance(value, dict):
+            return handler(value)
+        
+        prompt: str | None = value.get("prompt")
+        quick_option: QuickOption | None = value.get("quick_option")
+        response_schema: type[BaseModel] | None = value.get("response_schema")
+
+        #list for collecting pydantic's error and custom error
+        all_errors: list = []
+
+        def format_new_error(
+            _type: str = "value_error",
+            _loc: tuple[str | int, ...] = (),
+            _input: Any = None,
+            _ctx: dict[str, Any] | None = None
+        ) -> InitErrorDetails:
+            error: InitErrorDetails = {
+                "type": _type,
+                "loc": _loc,
+                "input": _input
+            }
+            if _ctx is not None:
+                error["ctx"] = _ctx
+            return error
+
+        try:
+            result = handler(value)
+        except ValidationError as exc:
+            for error in exc.errors():
+                _type = error.get("type")
+                _loc = error.get("loc")
+                _input = error.get("input")
+                _ctx = error.get("ctx")
+                new_error = format_new_error(
+                    _type=_type,
+                    _loc=_loc,
+                    _input=_input,
+                    _ctx=_ctx
+                )
+                all_errors.append(new_error)
+
+        if prompt is None and quick_option is None:
+            new_error = format_new_error(
+                _loc=("prompt",),
+                _input=prompt,
+                _ctx={
+                    "error": ValueError(
+                        "Both 'prompt' and 'quick_option' are missing. "
+                        "You must provide at least one of these to instruct the AI."
+                    )
+                }
+            )
+            all_errors.append(new_error)
+
+
+        if prompt is not None:
             if response_schema is None:
-                raise ResponseSchemaMissingError
-        return data
-    
+                new_error = format_new_error(
+                    _loc=("response_schema",),
+                    _input=response_schema,
+                    _ctx={
+                        "error": ValueError(
+                            "'response_schema' cannot be empty, please provide a valid pydantic schema for response model!"
+                        )
+                    }
+                )
+                all_errors.append(new_error)
+
+        if all_errors:
+            raise ValidationError.from_exception_data(
+                title="UrlExtracctionRequest",
+                line_errors=all_errors
+            )
+        return result
+
     @model_validator(mode='after')
     def resolve_quick_option_and_prompt(self):
-        if not self.quick_option and not self.prompt:
-            raise PromptMissingError
         if self.quick_option and not self.prompt:
             match self.quick_option:
                 case QuickOption.SUMMARY:
@@ -156,5 +218,3 @@ class UrlExtractionRequest(BaseModel):
                     self.prompt = products
                     self.response_schema = UrlProductsResponse
         return self
-
-    
