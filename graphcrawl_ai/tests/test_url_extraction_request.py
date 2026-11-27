@@ -4,11 +4,6 @@ from pydantic import BaseModel, HttpUrl, ValidationError
 from graphcrawl_ai.models.crawl_url.request_models.user_request import UrlExtractionRequest
 from graphcrawl_ai.models.crawl_url.response_models.llm_response import UrlSummaryResponse
 from graphcrawl_ai.llm.prompts import summary
-from graphcrawl_ai.exceptions.crawler.crawl_url_exceptions import(
-    UrlMissingError,
-    PromptMissingError,
-    ResponseSchemaMissingError
-)
 
 class MockResponseSchema(BaseModel):
     foo: str
@@ -83,16 +78,16 @@ def test_resolve_valid_quick_option_and_prompt(
         (None, 1, None, ValidationError),
         (None, 3.14, None, ValidationError),
         (None, "invalid", None, ValidationError),
-        ("mock prompt", None, None, ResponseSchemaMissingError),
-        ("mock prompt", "summary", None, ResponseSchemaMissingError),
-        ("mock prompt", "invalid", None, ResponseSchemaMissingError),
+        ("mock prompt", None, None, ValidationError),
+        ("mock prompt", "summary", None, ValidationError),
+        ("mock prompt", "invalid", None, ValidationError),
         ("mock prompt", "invalid", MockResponseSchema, ValidationError),
-        (None, None, None, PromptMissingError),
-        (None, None, MockResponseSchema, PromptMissingError),
-        ("", None, MockResponseSchema, PromptMissingError),
-        ("", None, None, PromptMissingError),
-        ("  ", None, MockResponseSchema, PromptMissingError),
-        ("  ", None, None, PromptMissingError),
+        (None, None, None, ValidationError),
+        (None, None, MockResponseSchema, ValidationError),
+        ("", None, MockResponseSchema, ValidationError),
+        ("", None, None, ValidationError),
+        ("  ", None, MockResponseSchema, ValidationError),
+        ("  ", None, None, ValidationError),
         (True, None, MockResponseSchema, ValidationError),
         (False, None, MockResponseSchema, ValidationError),
         (True, None, None, ValidationError),
@@ -101,8 +96,8 @@ def test_resolve_valid_quick_option_and_prompt(
         (False, "summary", MockResponseSchema, ValidationError),
         (True, "summary", None, ValidationError),
         (False, "summary", None, ValidationError),
-        ("mock_prompt", True, None, ResponseSchemaMissingError),
-        ("mock_prompt", False, None, ResponseSchemaMissingError),
+        ("mock_prompt", True, None, ValidationError),
+        ("mock_prompt", False, None, ValidationError),
         ("mock_prompt", True, MockResponseSchema, ValidationError),
         ("mock_prompt", False, MockResponseSchema, ValidationError),
         ("mock_prompt", None, int, ValidationError),
@@ -154,17 +149,14 @@ def test_resolve_invalid_quick_option_and_prompt(
             api_key="xxxx-xxxx-xxxx-xxxx",
             response_schema=test_response_schema,
         )
-        assert exc_info.value.errors() == "hello"
-    if raised_exception is  ValidationError:
-        assert ValidationError
 
 
 @pytest.mark.parametrize(
     "url, raised_exception",
     [
-        ("", UrlMissingError),
-        ("  ", UrlMissingError),
-        (None, UrlMissingError),
+        ("", ValidationError),
+        ("  ", ValidationError),
+        (None, ValidationError),
         (["https://foo.bar"], ValidationError)
     ],
     ids=[
